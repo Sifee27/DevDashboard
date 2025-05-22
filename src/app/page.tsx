@@ -66,6 +66,8 @@ export default function Home() {
             <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-8">
               Combine GitHub insights with a simple daily goals tracker in one centralized space.
             </p>
+            
+            <p className="mb-6 text-gray-400 text-sm max-w-lg mx-auto">&quot;DevDashboard transformed my workflow completely. I finally have all my critical dev metrics in one place. It&#39;s like having a personal assistant that keeps me focused on what matters.&quot;</p>
           
             {/* Feature badges */}
             <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-gray-300 mb-10">
@@ -156,7 +158,7 @@ export default function Home() {
               Join other developers who have streamlined their workflow with DevDashboard.
             </p>
             <button className="px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-medium rounded-lg transition-all duration-200 shadow-lg shadow-purple-900/30 text-lg">
-              Get Started – It's Free
+              Get Started – It&apos;s Free
             </button>
           </div>
         </div>

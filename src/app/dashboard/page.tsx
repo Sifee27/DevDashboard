@@ -2,7 +2,6 @@
 
 import React, { useState, FormEvent } from 'react';
 import { RefreshCcw, Moon, Sun, Github, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
 import { cn } from "../../lib/utils";
 
 // Component types
@@ -224,9 +223,9 @@ export default function Dashboard() {
             </div>
           </div>
           
-          {/* Today's Goals - Now in the top row, right side */}
+          {/* Today&apos;s Goals - Now in the top row, right side */}
           <div className="col-span-1 bg-[#161B22] rounded-lg p-5 shadow-md border border-[#30363D]">
-            <h2 className="text-base font-semibold text-[#C9D1D9] mb-4">Today's Goals</h2>
+            <h2 className="text-base font-semibold text-[#C9D1D9] mb-4">Today&apos;s Goals</h2>
             
             <form onSubmit={addTask} className="mb-4">
               <div className="relative">
@@ -334,7 +333,7 @@ export default function Dashboard() {
       <footer className="container mx-auto px-4 py-4 text-center text-xs text-[#8B949E] mt-6">
         <p>
           Built with <span className="text-[#F85149]">❤️</span> by a Developer for Developers | 
-          <a href="https://github.com/yourusername/dev-dashboard" className="text-[#58A6FF] hover:underline ml-1">GitHub</a>
+          <a href="https://github.com/Sifee27/DevDashboard" className="text-[#58A6FF] hover:underline ml-1">GitHub</a>
         </p>
       </footer>
     </div>
