@@ -132,15 +132,15 @@ export default function Dashboard() {
   };
   
   return (
-    <div className="min-h-screen bg-[#0D1117] text-[#C9D1D9] font-sans">
+    <div className="flex flex-col min-h-screen bg-[#0D1117] text-[#C9D1D9]" style={{ fontFamily: 'var(--font-space-grotesk)' }}>
       {/* Header */}
-      <header className="border-b border-[#30363D] bg-[#161B22] sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center">
-            <div className="h-7 w-7 rounded bg-[#58A6FF] flex items-center justify-center mr-2">
-              <Github className="h-4 w-4 text-[#0D1117]" />
+      <header className="border-b border-[#30363D] py-4 px-6 bg-[#161B22]">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <div className="h-8 w-8 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center">
+              <Github className="h-5 w-5 text-white" />
             </div>
-            <span className="text-base font-medium text-[#C9D1D9]">DevDashboard</span>
+            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-blue-500 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>DevDashboard</h1>
           </div>
           
           <div className="flex items-center space-x-3">
@@ -169,7 +169,7 @@ export default function Dashboard() {
           {/* Top Row: GitHub Activity + Today's Goals */}
           <div className="col-span-1 lg:col-span-3 bg-[#161B22] rounded-lg p-5 shadow-md border border-[#30363D]">
             <div className="flex justify-between items-center mb-5">
-              <h2 className="text-base font-semibold text-[#C9D1D9]">Recent Activity</h2>
+              <h2 className="text-base font-semibold text-[#C9D1D9] font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Recent Activity</h2>
               <span className="text-xs text-[#8B949E] px-2 py-1 rounded-full bg-[#21262D] border border-[#30363D]">Last 12 weeks</span>
             </div>
             
@@ -225,7 +225,7 @@ export default function Dashboard() {
           
           {/* Today&apos;s Goals - Now in the top row, right side */}
           <div className="col-span-1 bg-[#161B22] rounded-lg p-5 shadow-md border border-[#30363D]">
-            <h2 className="text-base font-semibold text-[#C9D1D9] mb-4">Today&apos;s Goals</h2>
+            <h2 className="text-base font-semibold text-[#C9D1D9] mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Today&apos;s Goals</h2>
             
             <form onSubmit={addTask} className="mb-4">
               <div className="relative">
@@ -280,7 +280,7 @@ export default function Dashboard() {
           
           {/* Bottom Row: Open Pull Requests and Top Repositories */}
           <div className="col-span-1 lg:col-span-2 bg-[#161B22] rounded-lg p-5 shadow-md border border-[#30363D]">
-            <h2 className="text-base font-semibold text-[#C9D1D9] mb-4">Open Pull Requests</h2>
+            <h2 className="text-base font-semibold text-[#C9D1D9] mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Open Pull Requests</h2>
             
             <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
               {pullRequests.map(pr => (
@@ -304,7 +304,7 @@ export default function Dashboard() {
           
           {/* Top Repositories */}
           <div className="col-span-1 lg:col-span-2 bg-[#161B22] rounded-lg p-5 shadow-md border border-[#30363D]">
-            <h2 className="text-base font-semibold text-[#C9D1D9] mb-4">Top Repositories</h2>
+            <h2 className="text-base font-semibold text-[#C9D1D9] mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Top Repositories</h2>
             
             <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
               {repositories.map(repo => (
