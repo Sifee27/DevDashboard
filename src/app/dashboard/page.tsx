@@ -35,6 +35,26 @@ export default function Dashboard() {
   // Theme state
   const [darkMode, setDarkMode] = useState(true);
   
+  // Toggle dark/light mode
+  const toggleTheme = () => {
+    setDarkMode(!darkMode);
+    // Update document class for global theme styling
+    if (!darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+  
+  // Apply the theme when component mounts
+  React.useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+  
   // Input state for new tasks
   const [newTask, setNewTask] = useState('');
   
@@ -80,14 +100,33 @@ export default function Dashboard() {
     { name: 'utilities', stars: 12, lastCommitDate: '2025-05-10', description: 'Helper functions and utilities' },
   ]);
   
-  // Sample checklist items
-  const [checklist, setChecklist] = useState<ChecklistItem[]>([
-    { id: '1', text: 'Fix login bug', completed: false },
-    { id: '2', text: 'Add dark mode toggle', completed: true },
-    { id: '3', text: 'Implement search feature', completed: false },
-    { id: '4', text: 'Update README', completed: false },
-    { id: '5', text: 'Deploy to production', completed: false },
-  ]);
+  // Load checklist from localStorage or use default items
+  const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      const savedChecklist = localStorage.getItem('devdashboard-checklist');
+      if (savedChecklist) {
+        try {
+          return JSON.parse(savedChecklist);
+        } catch (e) {
+          console.error('Failed to parse checklist from localStorage:', e);
+        }
+      }
+    }
+    return [
+      { id: '1', text: 'Fix login bug', completed: false },
+      { id: '2', text: 'Add dark mode toggle', completed: true },
+      { id: '3', text: 'Implement search feature', completed: false },
+      { id: '4', text: 'Update README', completed: false },
+      { id: '5', text: 'Deploy to production', completed: false },
+    ];
+  });
+  
+  // Save checklist to localStorage when it changes
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('devdashboard-checklist', JSON.stringify(checklist));
+    }
+  }, [checklist]);
   
   // Toggle checklist item completion
   const toggleChecklistItem = (id: string) => {
@@ -109,16 +148,6 @@ export default function Dashboard() {
   // Clear completed tasks
   const clearCompleted = () => {
     setChecklist(checklist.filter(item => !item.completed));
-  };
-  
-  // Handle theme toggle
-  const toggleTheme = () => {
-    setDarkMode(!darkMode);
-    if (darkMode) {
-      document.documentElement.classList.remove('dark');
-    } else {
-      document.documentElement.classList.add('dark');
-    }
   };
   
   // Get status color for PR
@@ -151,11 +180,14 @@ export default function Dashboard() {
               <RefreshCcw className="h-4 w-4" />
             </button>
             <button 
-              onClick={toggleTheme}
-              className="p-1.5 rounded-md bg-[#30363D] hover:bg-[#3C444D] transition-colors"
+              className="ml-1 p-1.5 rounded-md bg-[#1C2128] border border-[#30363D] flex items-center justify-center"
               aria-label="Toggle theme"
+              onClick={toggleTheme}
             >
-              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {darkMode ? 
+                <Sun className="h-4 w-4 text-[#C9D1D9]" /> : 
+                <Moon className="h-4 w-4 text-[#C9D1D9]" />
+              }
             </button>
             <div className="h-7 w-7 rounded-full bg-[#58A6FF] flex items-center justify-center text-[#0D1117] text-xs font-medium">
               GH

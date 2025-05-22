@@ -16,7 +16,7 @@ export default function Home() {
       {/* Header/Navigation */}
       <header className="border-b border-gray-800/40 backdrop-blur-sm bg-black/20 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 pl-2">
             <div className="h-7 w-7 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z" />
@@ -24,13 +24,13 @@ export default function Home() {
             </div>
             <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-blue-500 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>DevDashboard</h1>
           </div>
-          <nav className="hidden md:flex items-center space-x-6 text-xs font-medium">
+          <nav className="hidden md:flex items-center justify-center space-x-6 text-xs font-medium flex-1 mx-6">
             <a href="#features" className="text-gray-300 hover:text-white transition-colors">Features</a>
             <a href="#why" className="text-gray-300 hover:text-white transition-colors">Why DevDashboard</a>
             <a href="#how" className="text-gray-300 hover:text-white transition-colors">How It Works</a>
           </nav>
           <div>
-            <button className="px-3 py-1.5 rounded-md bg-violet-600/20 text-violet-400 border border-violet-600/30 hover:bg-violet-600/30 transition-colors text-xs font-medium">
+            <button className="px-3 py-1.5 rounded-md bg-violet-600/20 text-violet-400 border border-violet-600/30 hover:bg-violet-600/30 transition-colors text-xs font-medium font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
               Sign In
             </button>
           </div>
@@ -109,7 +109,7 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {/* Feature 1 */}
             <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800 rounded-lg p-5 hover:bg-gray-900/80 transition-all duration-200">
               <div className="w-10 h-10 bg-green-500/10 rounded-md flex items-center justify-center mb-3">
@@ -156,7 +156,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto text-center">
             <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800 rounded-lg p-5">
               <h3 className="text-base font-bold mb-2 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Focus on what matters</h3>
               <p className="text-gray-400 text-sm">No more context switching between GitHub, Jira, and your to-do list. Everything you need is in one dashboard.</p>
@@ -179,7 +179,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="flex flex-col md:flex-row justify-center items-start gap-6 max-w-4xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-center items-center gap-6 max-w-4xl mx-auto text-center">
             <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800 rounded-lg p-5 md:w-1/3">
               <div className="mb-2 text-violet-500 font-mono font-bold" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>01</div>
               <h3 className="text-base font-bold mb-2 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Connect GitHub</h3>
