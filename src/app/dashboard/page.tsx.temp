@@ -1,0 +1,178 @@
+"use client";
+
+import React, { useState } from 'react';
+import { ChevronDown, List, Settings, Moon, Sun } from 'lucide-react';
+import Link from 'next/link';
+import { cn } from "../../lib/utils";
+
+// Dashboard component types
+type ChecklistItem = {
+  id: string;
+  text: string;
+  completed: boolean;
+};
+
+export default function Dashboard() {
+  // State for theme toggle
+  const [darkMode, setDarkMode] = useState(true);
+  
+  // Sample data
+  const codingStreak = 7;
+  
+  // Generate sample commit activity data for the heatmap
+  const generateCommitActivity = (): number[] => {
+    // Generate random activity levels (0-3) for the heatmap cells
+    return Array.from({ length: 35 }, () => Math.floor(Math.random() * 4));
+  };
+  
+  const commitActivity = generateCommitActivity();
+  
+  // Sample checklist items
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([
+    { id: '1', text: 'Fix login bug', completed: false },
+    { id: '2', text: 'Add dark mode toggle', completed: true },
+    { id: '3', text: 'Implement search feature', completed: false },
+    { id: '4', text: 'Update README', completed: false },
+    { id: '5', text: 'Deploy to production', completed: false },
+  ]);
+  
+  // Toggle checklist item completion
+  const toggleChecklistItem = (id: string) => {
+    setChecklist(checklist.map(item => 
+      item.id === id ? { ...item, completed: !item.completed } : item
+    ));
+  };
+  
+  // Handle theme toggle
+  const toggleTheme = () => {
+    setDarkMode(!darkMode);
+    if (darkMode) {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  };
+  
+  return (
+    <div className="min-h-screen bg-[#0B0B15] text-white">
+      {/* Header/Navigation */}
+      <header className="border-b border-gray-800/20 bg-[#0B0B15] sticky top-0 z-50">
+        <div className="container mx-auto px-6 py-3 flex justify-between items-center">
+          <div className="flex items-center">
+            <div className="h-7 w-7 rounded bg-[#6366F1] flex items-center justify-center mr-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z" />
+              </svg>
+            </div>
+            <div className="flex items-center">
+              <span className="text-base font-medium text-white">DevDashboard</span>
+              <div className="ml-4 flex items-center gap-1 text-gray-400 cursor-pointer hover:text-white transition-colors text-xs">
+                <span>Project Name Dropdown</span>
+                <ChevronDown className="h-3 w-3" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            <button 
+              onClick={toggleTheme}
+              className="p-1.5 rounded-full bg-gray-800/30 hover:bg-gray-700/50 transition-colors"
+              aria-label="Toggle theme"
+            >
+              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+            <Link href="/settings" className="p-1.5 rounded-full bg-gray-800/30 hover:bg-gray-700/50 transition-colors">
+              <Settings className="h-4 w-4" />
+            </Link>
+            <div className="h-7 w-7 rounded-full bg-gray-300 flex items-center justify-center text-gray-800 text-xs font-medium">
+              U
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <main className="container mx-auto px-6 py-6">
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+          {/* Heatmap Section (spans 3 columns) */}
+          <div className="col-span-3">
+            {/* Coding Streak */}
+            <div className="flex justify-end mb-2">
+              <div className="text-right">
+                <h2 className="text-xs font-medium text-gray-400">Coding Streak</h2>
+                <div className="flex items-center justify-end">
+                  <span className="text-xl font-bold text-white">{codingStreak} days</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Contribution heatmap - 5 rows of 7 cells each */}
+            <div className="grid grid-rows-5 gap-2">
+              {[0, 1, 2, 3, 4].map(row => (
+                <div key={`row-${row}`} className="grid grid-cols-7 gap-2">
+                  {[0, 1, 2, 3, 4, 5, 6].map(col => {
+                    const index = row * 7 + col;
+                    const activityLevel = commitActivity[index];
+                    
+                    // Map activity level to color - exact match to screenshot
+                    let bgColorClass = 'bg-gray-800/70'; // Default (no activity)
+                    if (activityLevel > 0) {
+                      if (activityLevel === 1) bgColorClass = 'bg-green-900';
+                      else if (activityLevel === 2) bgColorClass = 'bg-green-700';
+                      else bgColorClass = 'bg-green-500';
+                    }
+                    
+                    return (
+                      <div 
+                        key={`cell-${index}`} 
+                        className={`aspect-square rounded-md ${bgColorClass}`}
+                        title={`${activityLevel} commits`}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Checklist (spans 1 column) */}
+          <div className="col-span-1 bg-[#141625] rounded-lg p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-sm font-medium text-gray-200">Checklist</h2>
+              <button className="text-gray-400 hover:text-gray-300">
+                <List className="h-4 w-4" />
+              </button>
+            </div>
+            
+            <ul className="space-y-3">
+              {checklist.map(item => (
+                <li key={item.id} className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={item.completed}
+                    onChange={() => toggleChecklistItem(item.id)}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-700 bg-gray-800 text-violet-500 focus:ring-0 focus:ring-offset-0"
+                  />
+                  <span className={cn(
+                    "text-xs",
+                    item.completed ? 'line-through text-gray-500' : 'text-gray-300'
+                  )}>
+                    {item.text}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            
+            <div className="mt-4 pt-3 border-t border-gray-800">
+              <button className="w-full py-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+                Add Task
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

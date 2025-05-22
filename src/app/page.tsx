@@ -87,9 +87,14 @@ export default function Home() {
                 placeholder="Enter your email" 
                 className="w-full p-3.5 bg-gray-900/80 border border-gray-700 rounded-lg backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 placeholder-gray-500"
               />
-              <button className="px-6 py-3.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-medium rounded-lg transition-all duration-200 shadow-lg shadow-purple-900/30">
-                Get Early Access
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button className="px-6 py-3.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-medium rounded-lg transition-all duration-200 shadow-lg shadow-purple-900/30">
+                  Get Early Access
+                </button>
+                <a href="/dashboard" className="px-6 py-3.5 bg-gray-800/80 hover:bg-gray-700/80 text-white font-medium rounded-lg transition-all duration-200 border border-gray-700 flex items-center justify-center">
+                  View Dashboard Demo
+                </a>
+              </div>
             </div>
           </div>
         </div>

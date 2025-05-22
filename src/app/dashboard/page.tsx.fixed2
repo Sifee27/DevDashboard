@@ -1,0 +1,342 @@
+"use client";
+
+import React, { useState, FormEvent } from 'react';
+import { RefreshCcw, Moon, Sun, Github, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
+import { cn } from "../../lib/utils";
+
+// Component types
+type CommitActivity = Array<{
+  date: string;
+  count: number;
+}>;
+
+type PullRequest = {
+  id: string;
+  title: string;
+  repository: string;
+  status: 'open' | 'merged' | 'draft';
+  url: string;
+};
+
+type Repository = {
+  name: string;
+  stars: number;
+  lastCommitDate: string;
+  description?: string;
+};
+
+type ChecklistItem = {
+  id: string;
+  text: string;
+  completed: boolean;
+};
+
+export default function Dashboard() {
+  // Theme state
+  const [darkMode, setDarkMode] = useState(true);
+  
+  // Input state for new tasks
+  const [newTask, setNewTask] = useState('');
+  
+  // Generate sample commit activity data for the heatmap
+  const generateCommitActivity = (): CommitActivity => {
+    const activity: CommitActivity = [];
+    const now = new Date();
+    
+    // Generate data for the last 12 weeks (84 days)
+    for (let i = 83; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(now.getDate() - i);
+      // Higher probability of commits on weekdays
+      const dayOfWeek = date.getDay();
+      const isWeekday = dayOfWeek > 0 && dayOfWeek < 6;
+      const maxCommits = isWeekday ? 8 : 4;
+      activity.push({
+        date: date.toISOString().split('T')[0],
+        count: Math.floor(Math.random() * maxCommits) // 0-7 commits on weekdays, 0-3 on weekends
+      });
+    }
+    
+    return activity;
+  };
+  
+  // Sample data
+  const commitActivity = generateCommitActivity();
+  
+  // Sample pull requests
+  const [pullRequests] = useState<PullRequest[]>([
+    { id: '1', title: 'Fix authentication bug', repository: 'auth-service', status: 'open', url: '#' },
+    { id: '2', title: 'Add dark mode toggle', repository: 'ui-components', status: 'merged', url: '#' },
+    { id: '3', title: 'Implement search feature', repository: 'search-api', status: 'draft', url: '#' },
+    { id: '4', title: 'Update documentation', repository: 'docs', status: 'open', url: '#' },
+    { id: '5', title: 'Optimize database queries', repository: 'backend', status: 'open', url: '#' },
+  ]);
+  
+  // Sample repositories
+  const [repositories] = useState<Repository[]>([
+    { name: 'frontend-app', stars: 24, lastCommitDate: '2025-05-20', description: 'Main frontend application' },
+    { name: 'api-service', stars: 16, lastCommitDate: '2025-05-18', description: 'Core API services' },
+    { name: 'ui-components', stars: 57, lastCommitDate: '2025-05-15', description: 'Reusable UI components' },
+    { name: 'utilities', stars: 12, lastCommitDate: '2025-05-10', description: 'Helper functions and utilities' },
+  ]);
+  
+  // Sample checklist items
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([
+    { id: '1', text: 'Fix login bug', completed: false },
+    { id: '2', text: 'Add dark mode toggle', completed: true },
+    { id: '3', text: 'Implement search feature', completed: false },
+    { id: '4', text: 'Update README', completed: false },
+    { id: '5', text: 'Deploy to production', completed: false },
+  ]);
+  
+  // Toggle checklist item completion
+  const toggleChecklistItem = (id: string) => {
+    setChecklist(checklist.map(item => 
+      item.id === id ? { ...item, completed: !item.completed } : item
+    ));
+  };
+  
+  // Add new task
+  const addTask = (e: FormEvent) => {
+    e.preventDefault();
+    if (newTask.trim()) {
+      const newId = String(Date.now());
+      setChecklist([...checklist, { id: newId, text: newTask.trim(), completed: false }]);
+      setNewTask('');
+    }
+  };
+  
+  // Clear completed tasks
+  const clearCompleted = () => {
+    setChecklist(checklist.filter(item => !item.completed));
+  };
+  
+  // Handle theme toggle
+  const toggleTheme = () => {
+    setDarkMode(!darkMode);
+    if (darkMode) {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  };
+  
+  // Get status color for PR
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'open': return 'bg-[#3FB950] text-[#0D1117]';
+      case 'merged': return 'bg-[#A371F7] text-[#0D1117]';
+      case 'draft': return 'bg-[#768390] text-[#0D1117]';
+      default: return 'bg-[#768390] text-[#0D1117]';
+    }
+  };
+  
+  return (
+    <div className="min-h-screen bg-[#0D1117] text-[#C9D1D9] font-sans">
+      {/* Header */}
+      <header className="border-b border-[#30363D] bg-[#161B22] sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center">
+            <div className="h-7 w-7 rounded bg-[#58A6FF] flex items-center justify-center mr-2">
+              <Github className="h-4 w-4 text-[#0D1117]" />
+            </div>
+            <span className="text-base font-medium text-[#C9D1D9]">DevDashboard</span>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            <button 
+              className="p-1.5 rounded-md bg-[#30363D] hover:bg-[#3C444D] transition-colors"
+              aria-label="Refresh dashboard"
+            >
+              <RefreshCcw className="h-4 w-4" />
+            </button>
+            <button 
+              onClick={toggleTheme}
+              className="p-1.5 rounded-md bg-[#30363D] hover:bg-[#3C444D] transition-colors"
+              aria-label="Toggle theme"
+            >
+              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+            <div className="h-7 w-7 rounded-full bg-[#58A6FF] flex items-center justify-center text-[#0D1117] text-xs font-medium">
+              GH
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <main className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* GitHub Activity Section */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-[#161B22] rounded-lg p-6 shadow-md border border-[#30363D]">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-base font-semibold text-[#C9D1D9]">Recent Activity</h2>
+              <span className="text-xs text-[#8B949E] px-2 py-1 rounded-full bg-[#21262D] border border-[#30363D]">Last 12 weeks</span>
+            </div>
+            
+            {/* Contribution heatmap - GitHub style */}
+            <div className="pb-2">
+              <div className="flex">
+                {/* Month labels */}
+                <div className="flex flex-col justify-between pr-3 text-sm text-[#8B949E]">
+                  <span>May</span>
+                  <span>Jun</span>
+                  <span>Jul</span>
+                </div>
+                
+                {/* Contribution grid */}
+                <div className="flex-1">
+                  <div className="grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gridTemplateRows: 'repeat(7, 1fr)', gap: '3px' }}>
+                    {Array.from({ length: 84 }).map((_, index) => {
+                      const day = commitActivity[index] || { count: 0 };
+                      
+                      // Map activity level to color - GitHub style
+                      let bgColorClass = 'bg-[#161B22] border border-[#30363D]'; // Default (no activity)
+                      if (day.count > 0) {
+                        if (day.count === 1) bgColorClass = 'bg-[#0E4429]';
+                        else if (day.count < 3) bgColorClass = 'bg-[#006D32]';
+                        else if (day.count < 5) bgColorClass = 'bg-[#26A641]';
+                        else bgColorClass = 'bg-[#39D353]';
+                      }
+                      
+                      return (
+                        <div 
+                          key={`cell-${index}`} 
+                          className={`aspect-square rounded-sm ${bgColorClass} hover:ring-1 hover:ring-[#58A6FF] transition-all`}
+                          title={`${day.date}: ${day.count} commits`}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Legend */}
+              <div className="flex justify-end items-center mt-4 text-xs text-[#8B949E]">
+                <span className="mr-2">Less</span>
+                <div className="w-4 h-4 rounded-sm bg-[#161B22] border border-[#30363D] mr-2"></div>
+                <div className="w-4 h-4 rounded-sm bg-[#0E4429] mr-2"></div>
+                <div className="w-4 h-4 rounded-sm bg-[#006D32] mr-2"></div>
+                <div className="w-4 h-4 rounded-sm bg-[#26A641] mr-2"></div>
+                <div className="w-4 h-4 rounded-sm bg-[#39D353] mr-2"></div>
+                <span>More</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Open Pull Requests */}
+          <div className="col-span-1 bg-[#161B22] rounded-lg p-4 shadow-md">
+            <h2 className="text-sm font-medium text-[#C9D1D9] mb-4">Open Pull Requests</h2>
+            
+            <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+              {pullRequests.map(pr => (
+                <div key={pr.id} className="p-3 bg-[#1C2128] rounded-md hover:bg-[#21262D] transition-colors">
+                  <div className="flex justify-between">
+                    <h3 className="text-xs font-medium text-[#58A6FF] truncate mb-1 flex-1">{pr.title}</h3>
+                    <a href={pr.url} className="text-[#8B949E] hover:text-[#C9D1D9]" aria-label="External link">
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs text-[#8B949E]">{pr.repository}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(pr.status)}`}>
+                      {pr.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Top Repositories */}
+          <div className="col-span-1 bg-[#161B22] rounded-lg p-4 shadow-md">
+            <h2 className="text-sm font-medium text-[#C9D1D9] mb-4">Top Repositories</h2>
+            
+            <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+              {repositories.map(repo => (
+                <div key={repo.name} className="p-3 bg-[#1C2128] rounded-md hover:bg-[#21262D] transition-colors">
+                  <h3 className="text-xs font-medium text-[#58A6FF] truncate mb-1">{repo.name}</h3>
+                  {repo.description && (
+                    <p className="text-xs text-[#8B949E] truncate mb-2">{repo.description}</p>
+                  )}
+                  <div className="flex items-center justify-between text-xs text-[#8B949E]">
+                    <div className="flex items-center">
+                      <svg className="h-3 w-3 mr-1" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z" />
+                      </svg>
+                      {repo.stars}
+                    </div>
+                    <span>Updated {new Date(repo.lastCommitDate).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Daily Goals / Task List */}
+          <div className="col-span-1 bg-[#161B22] rounded-lg p-4 shadow-md">
+            <h2 className="text-sm font-medium text-[#C9D1D9] mb-4">Today's Goals</h2>
+            
+            <form onSubmit={addTask} className="mb-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={newTask}
+                  onChange={(e) => setNewTask(e.target.value)}
+                  placeholder="Add a new task..."
+                  className="w-full py-2 px-3 bg-[#1C2128] border border-[#30363D] rounded-md text-xs text-[#C9D1D9] placeholder-[#8B949E] focus:outline-none focus:ring-1 focus:ring-[#58A6FF] focus:border-[#58A6FF]"
+                />
+                <button 
+                  type="submit" 
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#8B949E] hover:text-[#C9D1D9]"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
+                    <path fillRule="evenodd" d="M7.75 2a.75.75 0 01.75.75V7h4.25a.75.75 0 110 1.5H8.5v4.25a.75.75 0 11-1.5 0V8.5H2.75a.75.75 0 010-1.5H7V2.75A.75.75 0 017.75 2z" />
+                  </svg>
+                </button>
+              </div>
+            </form>
+            
+            <ul className="space-y-2 max-h-[200px] overflow-y-auto mb-3">
+              {checklist.map(item => (
+                <li key={item.id} className="flex items-start gap-2 py-1">
+                  <input
+                    type="checkbox"
+                    checked={item.completed}
+                    onChange={() => toggleChecklistItem(item.id)}
+                    className="mt-0.5 h-4 w-4 rounded border-[#30363D] bg-[#1C2128] text-[#58A6FF] focus:ring-0 focus:ring-offset-0"
+                  />
+                  <span className={cn(
+                    "text-xs",
+                    item.completed ? 'line-through text-[#8B949E]' : 'text-[#C9D1D9]'
+                  )}>
+                    {item.text}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            
+            {checklist.some(item => item.completed) && (
+              <div className="text-right">
+                <button 
+                  onClick={clearCompleted}
+                  className="text-xs text-[#58A6FF] hover:text-[#79C0FF] transition-colors"
+                >
+                  Clear completed
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+      
+      {/* Footer */}
+      <footer className="container mx-auto px-4 py-4 text-center text-xs text-[#8B949E] mt-6">
+        <p>
+          Built with <span className="text-[#F85149]">❤️</span> by a Developer for Developers | 
+          <a href="https://github.com/yourusername/dev-dashboard" className="text-[#58A6FF] hover:underline ml-1">GitHub</a>
+        </p>
+      </footer>
+    </div>
+  );
+}
