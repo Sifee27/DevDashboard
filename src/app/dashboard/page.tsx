@@ -32,14 +32,34 @@ type ChecklistItem = {
 };
 
 export default function Dashboard() {
-  // Theme state
-  const [darkMode, setDarkMode] = useState(true);
+  // Theme state - initialized from localStorage or system preference
+  const [darkMode, setDarkMode] = useState(() => {
+    // Check if we're in the browser environment
+    if (typeof window !== 'undefined') {
+      // First try to get from localStorage
+      const savedTheme = localStorage.getItem('devdashboard-theme');
+      if (savedTheme !== null) {
+        return savedTheme === 'dark';
+      }
+      // If no saved preference, check system preference
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    // Default to dark mode if not in browser
+    return true;
+  });
   
   // Toggle dark/light mode
   const toggleTheme = () => {
-    setDarkMode(!darkMode);
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('devdashboard-theme', newDarkMode ? 'dark' : 'light');
+    }
+    
     // Update document class for global theme styling
-    if (!darkMode) {
+    if (newDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
@@ -53,7 +73,7 @@ export default function Dashboard() {
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, []);
+  }, [darkMode]);
   
   // Input state for new tasks
   const [newTask, setNewTask] = useState('');
@@ -153,17 +173,17 @@ export default function Dashboard() {
   // Get status color for PR
   const getStatusColor = (status: string) => {
     switch(status) {
-      case 'open': return 'bg-[#3FB950] text-[#0D1117]';
-      case 'merged': return 'bg-[#A371F7] text-[#0D1117]';
-      case 'draft': return 'bg-[#768390] text-[#0D1117]';
-      default: return 'bg-[#768390] text-[#0D1117]';
+      case 'open': return 'bg-green-500 dark:bg-green-600 text-white';
+      case 'merged': return 'bg-purple-500 dark:bg-purple-600 text-white';
+      case 'draft': return 'bg-gray-500 dark:bg-gray-600 text-white';
+      default: return 'bg-gray-500 dark:bg-gray-600 text-white';
     }
   };
   
   return (
-    <div className="flex flex-col min-h-screen bg-[#0D1117] text-[#C9D1D9]" style={{ fontFamily: 'var(--font-space-grotesk)' }}>
+    <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-200" style={{ fontFamily: 'var(--font-space-grotesk)' }}>
       {/* Header */}
-      <header className="border-b border-[#30363D] py-4 px-6 bg-[#161B22]">
+      <header className="border-b border-gray-200 dark:border-gray-800 py-4 px-6 bg-white dark:bg-gray-900 shadow-sm">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <div className="h-8 w-8 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center">
@@ -174,22 +194,22 @@ export default function Dashboard() {
           
           <div className="flex items-center space-x-3">
             <button 
-              className="p-1.5 rounded-md bg-[#30363D] hover:bg-[#3C444D] transition-colors"
+              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
               aria-label="Refresh dashboard"
             >
-              <RefreshCcw className="h-4 w-4" />
+              <RefreshCcw className="h-4 w-4 text-gray-700 dark:text-gray-300" />
             </button>
             <button 
-              className="ml-1 p-1.5 rounded-md bg-[#1C2128] border border-[#30363D] flex items-center justify-center"
+              className="ml-1 p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 flex items-center justify-center"
               aria-label="Toggle theme"
               onClick={toggleTheme}
             >
               {darkMode ? 
-                <Sun className="h-4 w-4 text-[#C9D1D9]" /> : 
-                <Moon className="h-4 w-4 text-[#C9D1D9]" />
+                <Sun className="h-4 w-4 text-gray-700 dark:text-gray-300" /> : 
+                <Moon className="h-4 w-4 text-gray-700 dark:text-gray-300" />
               }
             </button>
-            <div className="h-7 w-7 rounded-full bg-[#58A6FF] flex items-center justify-center text-[#0D1117] text-xs font-medium">
+            <div className="h-7 w-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
               GH
             </div>
           </div>
@@ -199,17 +219,17 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Top Row: GitHub Activity + Today's Goals */}
-          <div className="col-span-1 lg:col-span-3 bg-[#161B22] rounded-lg p-5 shadow-md border border-[#30363D]">
+          <div className="col-span-1 lg:col-span-3 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
             <div className="flex justify-between items-center mb-5">
-              <h2 className="text-base font-semibold text-[#C9D1D9] font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Recent Activity</h2>
-              <span className="text-xs text-[#8B949E] px-2 py-1 rounded-full bg-[#21262D] border border-[#30363D]">Last 12 weeks</span>
+              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Recent Activity</h2>
+              <span className="text-xs text-gray-600 dark:text-gray-400 px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">Last 12 weeks</span>
             </div>
             
             {/* Contribution heatmap - GitHub style */}
             <div className="pb-2">
               <div className="flex">
                 {/* Month labels */}
-                <div className="flex flex-col justify-between pr-3 text-sm text-[#8B949E]">
+                <div className="flex flex-col justify-between pr-3 text-sm text-gray-500 dark:text-gray-400">
                   <span>May</span>
                   <span>Jun</span>
                   <span>Jul</span>
@@ -221,19 +241,19 @@ export default function Dashboard() {
                     {Array.from({ length: 84 }).map((_, index) => {
                       const day = commitActivity[index] || { count: 0 };
                       
-                      // Map activity level to color - GitHub style
-                      let bgColorClass = 'bg-[#161B22] border border-[#30363D]'; // Default (no activity)
+                      // Map activity level to color - Theme responsive
+                      let bgColorClass = 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'; // Default (no activity)
                       if (day.count > 0) {
-                        if (day.count === 1) bgColorClass = 'bg-[#0E4429]';
-                        else if (day.count < 3) bgColorClass = 'bg-[#006D32]';
-                        else if (day.count < 5) bgColorClass = 'bg-[#26A641]';
-                        else bgColorClass = 'bg-[#39D353]';
+                        if (day.count === 1) bgColorClass = 'bg-green-100 dark:bg-green-900';
+                        else if (day.count < 3) bgColorClass = 'bg-green-200 dark:bg-green-800';
+                        else if (day.count < 5) bgColorClass = 'bg-green-300 dark:bg-green-700';
+                        else bgColorClass = 'bg-green-400 dark:bg-green-600';
                       }
                       
                       return (
                         <div 
                           key={`cell-${index}`} 
-                          className={`aspect-square rounded-sm ${bgColorClass} hover:ring-1 hover:ring-[#58A6FF] transition-all`}
+                          className={`aspect-square rounded-sm ${bgColorClass} hover:ring-1 hover:ring-blue-500 transition-all`}
                           title={`${day.date}: ${day.count} commits`}
                         />
                       );
@@ -243,21 +263,21 @@ export default function Dashboard() {
               </div>
               
               {/* Legend */}
-              <div className="flex justify-end items-center mt-3 text-xs text-[#8B949E]">
+              <div className="flex justify-end items-center mt-3 text-xs text-gray-500 dark:text-gray-400">
                 <span className="mr-2">Less</span>
-                <div className="w-3 h-3 rounded-sm bg-[#161B22] border border-[#30363D] mr-1"></div>
-                <div className="w-3 h-3 rounded-sm bg-[#0E4429] mr-1"></div>
-                <div className="w-3 h-3 rounded-sm bg-[#006D32] mr-1"></div>
-                <div className="w-3 h-3 rounded-sm bg-[#26A641] mr-1"></div>
-                <div className="w-3 h-3 rounded-sm bg-[#39D353] mr-1"></div>
+                <div className="w-3 h-3 rounded-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mr-1"></div>
+                <div className="w-3 h-3 rounded-sm bg-green-100 dark:bg-green-900 mr-1"></div>
+                <div className="w-3 h-3 rounded-sm bg-green-200 dark:bg-green-800 mr-1"></div>
+                <div className="w-3 h-3 rounded-sm bg-green-300 dark:bg-green-700 mr-1"></div>
+                <div className="w-3 h-3 rounded-sm bg-green-400 dark:bg-green-600 mr-1"></div>
                 <span>More</span>
               </div>
             </div>
           </div>
           
           {/* Today&apos;s Goals - Now in the top row, right side */}
-          <div className="col-span-1 bg-[#161B22] rounded-lg p-5 shadow-md border border-[#30363D]">
-            <h2 className="text-base font-semibold text-[#C9D1D9] mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Today&apos;s Goals</h2>
+          <div className="col-span-1 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Today&apos;s Goals</h2>
             
             <form onSubmit={addTask} className="mb-4">
               <div className="relative">
@@ -266,11 +286,11 @@ export default function Dashboard() {
                   value={newTask}
                   onChange={(e) => setNewTask(e.target.value)}
                   placeholder="Add a new task..."
-                  className="w-full py-2 px-3 bg-[#1C2128] border border-[#30363D] rounded-md text-xs text-[#C9D1D9] placeholder-[#8B949E] focus:outline-none focus:ring-1 focus:ring-[#58A6FF] focus:border-[#58A6FF]"
+                  className="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-xs text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
                 <button 
                   type="submit" 
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#8B949E] hover:text-[#C9D1D9]"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
                     <path fillRule="evenodd" d="M7.75 2a.75.75 0 01.75.75V7h4.25a.75.75 0 110 1.5H8.5v4.25a.75.75 0 11-1.5 0V8.5H2.75a.75.75 0 010-1.5H7V2.75A.75.75 0 017.75 2z" />
@@ -286,11 +306,11 @@ export default function Dashboard() {
                     type="checkbox"
                     checked={item.completed}
                     onChange={() => toggleChecklistItem(item.id)}
-                    className="mt-0.5 h-4 w-4 rounded border-[#30363D] bg-[#1C2128] text-[#58A6FF] focus:ring-0 focus:ring-offset-0"
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-blue-500 focus:ring-0 focus:ring-offset-0"
                   />
                   <span className={cn(
                     "text-xs",
-                    item.completed ? 'line-through text-[#8B949E]' : 'text-[#C9D1D9]'
+                    item.completed ? 'line-through text-gray-500 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'
                   )}>
                     {item.text}
                   </span>
@@ -302,7 +322,7 @@ export default function Dashboard() {
               <div className="text-right">
                 <button 
                   onClick={clearCompleted}
-                  className="text-xs text-[#58A6FF] hover:text-[#79C0FF] transition-colors"
+                  className="text-xs text-blue-500 hover:text-blue-400 transition-colors"
                 >
                   Clear completed
                 </button>
@@ -311,20 +331,20 @@ export default function Dashboard() {
           </div>
           
           {/* Bottom Row: Open Pull Requests and Top Repositories */}
-          <div className="col-span-1 lg:col-span-2 bg-[#161B22] rounded-lg p-5 shadow-md border border-[#30363D]">
-            <h2 className="text-base font-semibold text-[#C9D1D9] mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Open Pull Requests</h2>
+          <div className="col-span-1 lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Open Pull Requests</h2>
             
             <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
               {pullRequests.map(pr => (
-                <div key={pr.id} className="p-3 bg-[#1C2128] rounded-md hover:bg-[#21262D] transition-colors">
+                <div key={pr.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                   <div className="flex justify-between">
-                    <h3 className="text-xs font-medium text-[#58A6FF] truncate mb-1 flex-1">{pr.title}</h3>
-                    <a href={pr.url} className="text-[#8B949E] hover:text-[#C9D1D9]" aria-label="External link">
+                    <h3 className="text-xs font-medium text-blue-500 truncate mb-1 flex-1">{pr.title}</h3>
+                    <a href={pr.url} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300" aria-label="External link">
                       <ExternalLink className="h-3 w-3" />
                     </a>
                   </div>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-[#8B949E]">{pr.repository}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{pr.repository}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(pr.status)}`}>
                       {pr.status}
                     </span>
@@ -335,17 +355,17 @@ export default function Dashboard() {
           </div>
           
           {/* Top Repositories */}
-          <div className="col-span-1 lg:col-span-2 bg-[#161B22] rounded-lg p-5 shadow-md border border-[#30363D]">
-            <h2 className="text-base font-semibold text-[#C9D1D9] mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Top Repositories</h2>
+          <div className="col-span-1 lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Top Repositories</h2>
             
             <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
               {repositories.map(repo => (
-                <div key={repo.name} className="p-3 bg-[#1C2128] rounded-md hover:bg-[#21262D] transition-colors">
-                  <h3 className="text-xs font-medium text-[#58A6FF] truncate mb-1">{repo.name}</h3>
+                <div key={repo.name} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <h3 className="text-xs font-medium text-blue-500 truncate mb-1">{repo.name}</h3>
                   {repo.description && (
-                    <p className="text-xs text-[#8B949E] truncate mb-2">{repo.description}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mb-2">{repo.description}</p>
                   )}
-                  <div className="flex items-center justify-between text-xs text-[#8B949E]">
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                     <div className="flex items-center">
                       <svg className="h-3 w-3 mr-1" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z" />
