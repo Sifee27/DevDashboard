@@ -143,7 +143,7 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold mb-2">Privacy Focused</h3>
-              <p className="text-gray-400">Your data stays on your machine. We don't track, store, or sell your information.</p>
+              <p className="text-gray-400">Your data stays on your machine. We don&apos;t track, store, or sell your information.</p>
             </div>
           </div>
         </div>
