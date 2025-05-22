@@ -222,7 +222,7 @@ export default function Home() {
               <h3 className="text-base font-bold mb-1.5 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-blue-500">DevDashboard</span>
               </h3>
-              <p className="text-gray-400 text-xs">The developer's productivity hub.</p>
+              <p className="text-gray-400 text-xs">The developer&apos;s productivity hub.</p>
             </div>
             <div className="flex gap-4 text-xs">
               <a href="#" className="text-gray-400 hover:text-white transition-colors">About</a>
