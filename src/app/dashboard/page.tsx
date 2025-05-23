@@ -231,7 +231,7 @@ export default function Dashboard() {
       return item;
     });
 
-    if (visualSettings.enableMicrointeractions &&
+    if (visualSettings?.enableMicrointeractions &&
       updatedList.length > 0 &&
       updatedList.every(item => item.completed)) {
       setShowConfetti(true);
@@ -282,8 +282,23 @@ export default function Dashboard() {
     setTimeout(() => setShowConfetti(false), 1500);
   };
 
-  // Visual settings state
-  const [visualSettings, setVisualSettings] = useState<VisualSettingsState>({
+  // Define theme colors as constants to avoid TDZ issues
+  const THEME_COLORS = {
+    violet: { primary: '#8b5cf6', secondary: '#6d28d9' },
+    blue: { primary: '#3b82f6', secondary: '#2563eb' },
+    green: { primary: '#10b981', secondary: '#059669' },
+    amber: { primary: '#f59e0b', secondary: '#d97706' }
+  };
+
+  // Define animation speeds as constants
+  const ANIMATION_SPEEDS = {
+    slow: 0.1,
+    normal: 0.2,
+    fast: 0.4
+  };
+
+  // Initial visual settings state - defined before any usage
+  const initialVisualSettings: VisualSettingsState = {
     enableAnimations: true,
     backgroundStyle: 'code',
     enableMicrointeractions: true,
@@ -291,42 +306,70 @@ export default function Dashboard() {
     animationSpeed: 'normal',
     layoutDensity: 'comfortable',
     contrastMode: 'standard',
-  });
+  };
+
+  // Load saved visual settings on component mount
+  useEffect(() => {
+    // Guard against SSR
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    
+    try {
+      const savedSettings = localStorage.getItem('visualSettings');
+      if (savedSettings) {
+        const parsedSettings = JSON.parse(savedSettings) as VisualSettingsState;
+        setVisualSettings(parsedSettings);
+      }
+    } catch (error) {
+      console.error('Error loading saved visual settings', error);
+      // Fallback to initial settings on error
+      setVisualSettings(initialVisualSettings);
+    }
+  }, []);
+
+  // Visual settings state
+  const [visualSettings, setVisualSettings] = useState<VisualSettingsState>(initialVisualSettings);
+
+  // Visual settings onChange handler
+  const handleVisualSettingsChange = (settings: VisualSettingsState) => {
+    if (!settings) return; // Guard against undefined settings
+    setVisualSettings(settings);
+    // Only access localStorage on client side
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('visualSettings', JSON.stringify(settings));
+    }
+  };
 
   // Show confetti state
   const [showConfetti, setShowConfetti] = useState(false);
 
   // Helper function to get color theme CSS variables
   const getThemeColor = () => {
-    switch(visualSettings.colorTheme) {
-      case 'violet': return { primary: '#8b5cf6', secondary: '#6d28d9' };
-      case 'blue': return { primary: '#3b82f6', secondary: '#2563eb' };
-      case 'green': return { primary: '#10b981', secondary: '#059669' };
-      case 'amber': return { primary: '#f59e0b', secondary: '#d97706' };
-      default: return { primary: '#8b5cf6', secondary: '#6d28d9' };
-    }
+    // Use safe access to avoid TDZ
+    const colorTheme = visualSettings?.colorTheme || 'violet';
+    return THEME_COLORS[colorTheme] || THEME_COLORS.violet;
   };
 
   // Get animation speed value in seconds
   const getAnimationSpeed = () => {
-    switch(visualSettings.animationSpeed) {
-      case 'slow': return 0.1;
-      case 'normal': return 0.2;
-      case 'fast': return 0.4;
-      default: return 0.2;
-    }
+    // Use safe access to avoid TDZ
+    const speed = visualSettings?.animationSpeed || 'normal';
+    return ANIMATION_SPEEDS[speed] || ANIMATION_SPEEDS.normal;
   };
 
   // Get layout spacing class based on density setting
   const getLayoutClasses = () => {
     const baseClasses = "flex flex-col min-h-screen bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-200 relative";
     
+    // Safe access to avoid TDZ
+    const contrastMode = visualSettings?.contrastMode || 'standard';
+    const layoutDensity = visualSettings?.layoutDensity || 'comfortable';
+    
     // Add high contrast if enabled
-    const contrastClass = visualSettings.contrastMode === 'high' ? 'high-contrast' : '';
+    const contrastClass = contrastMode === 'high' ? 'high-contrast' : '';
     
     // Add layout density classes
     let densityClass = '';
-    switch(visualSettings.layoutDensity) {
+    switch(layoutDensity) {
       case 'compact': densityClass = 'layout-compact'; break;
       case 'comfortable': densityClass = 'layout-comfortable'; break;
       case 'spacious': densityClass = 'layout-spacious'; break;
@@ -336,8 +379,8 @@ export default function Dashboard() {
     return `${baseClasses} ${densityClass} ${contrastClass}`;
   };
   
-  // Get the current theme colors
-  const themeColors = getThemeColor();
+  // Get the current theme colors - Memoize to avoid recalculation
+  const themeColors = useMemo(() => getThemeColor(), [visualSettings?.colorTheme]);
   
   return (
     <div 
@@ -348,21 +391,26 @@ export default function Dashboard() {
         '--theme-secondary': themeColors.secondary,
       } as React.CSSProperties}
     >
-      {/* Animated Background - Added position relative to container to ensure canvas works */}
+      {/* Animated Background - with safety guards against TDZ */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
-        {visualSettings.enableAnimations && visualSettings.backgroundStyle !== 'none' && (
+        {visualSettings?.enableAnimations && visualSettings?.backgroundStyle !== 'none' && (
           <AnimatedBackground
-            variant={visualSettings.backgroundStyle}
-            opacity={visualSettings.contrastMode === 'high' ? 0.06 : 0.04}
+            variant={visualSettings?.backgroundStyle || 'code'}
+            opacity={(visualSettings?.contrastMode === 'high') ? 0.06 : 0.04}
             speed={getAnimationSpeed()}
-            color={darkMode ? themeColors.primary : themeColors.secondary}
+            color={darkMode ? 
+                  (themeColors?.primary || '#8b5cf6') : 
+                  (themeColors?.secondary || '#6d28d9')}
           />
         )}
       </div>
 
-      {/* Confetti Effect */}
-      {visualSettings.enableMicrointeractions && (
-        <ConfettiEffect trigger={showConfetti} onComplete={handleConfettiComplete} />
+      {/* Confetti Effect - with safety guards against TDZ */}
+      {visualSettings?.enableMicrointeractions && (
+        <ConfettiEffect 
+          trigger={showConfetti || false} 
+          onComplete={handleConfettiComplete} 
+        />
       )}
       {/* Header */}
       <header className="border-b border-gray-200 dark:border-gray-800 py-4 px-6 bg-white dark:bg-gray-900 shadow-sm">
