@@ -14,6 +14,7 @@ import { cn } from "../../lib/utils";
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskItem } from '@/components/ui/task-item';
 import { PRStatusIcon } from '@/components/ui/pr-status-icon';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 // Component types
 type CommitActivity = Array<{
@@ -45,7 +46,7 @@ type ChecklistItem = {
 type DashboardCard = {
   id: string;
   title: string;
-  type: 'github-activity' | 'goals' | 'pull-requests' | 'repositories';
+  type: 'github-activity' | 'goals' | 'pull-requests' | 'repositories' | 'languages';
   colSpan: string;
 };
 
@@ -131,10 +132,9 @@ function renderCard(card: DashboardCard, props: {
     filteredRepositories
   } = props;
 
-  switch (card.type) {
-    case 'github-activity':
+  switch (card.type) {    case 'github-activity':
       return (
-        <SortableCard id={card.id} className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg card-hover staggered-card-1 card dashboard-card min-h-[320px]`}>
+        <SortableCard id={card.id} className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-1 card dashboard-card min-h-[320px]`}>
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Recent Activity</h2>
             <span className="text-sm text-gray-600 dark:text-gray-400 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">Last 12 weeks</span>
@@ -192,11 +192,9 @@ function renderCard(card: DashboardCard, props: {
             </div>
           </div>
         </SortableCard>
-      );
-
-    case 'goals':
+      );    case 'goals':
       return (
-        <SortableCard id={card.id} className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg card-hover staggered-card-2 card dashboard-card min-h-[320px]`}>
+        <SortableCard id={card.id} className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-2 card dashboard-card min-h-[320px]`}>
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Today&apos;s Goals</h2>
 
           <form onSubmit={addTask} className="mb-4">
@@ -261,11 +259,9 @@ function renderCard(card: DashboardCard, props: {
             </div>
           )}
         </SortableCard>
-      );
-
-    case 'pull-requests':
+      );    case 'pull-requests':
       return (
-        <SortableCard id={card.id} className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 dashboard-card min-h-[320px]`}>
+        <SortableCard id={card.id} className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Pull Requests</h2>
             <div className="flex gap-2">
@@ -310,11 +306,9 @@ function renderCard(card: DashboardCard, props: {
             </div>
           )}
         </SortableCard>
-      );
-
-    case 'repositories':
+      );    case 'repositories':
       return (
-        <SortableCard id={card.id} className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 dashboard-card min-h-[320px]`}>
+        <SortableCard id={card.id} className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Top Repositories</h2>
             <div className="flex gap-2">
@@ -369,6 +363,64 @@ function renderCard(card: DashboardCard, props: {
                 </div>
               ))}
             </div>
+          )}        </SortableCard>
+      );
+
+    case 'languages':
+      const languageData = [
+        { name: 'TypeScript', value: 35, color: '#3178c6' },
+        { name: 'JavaScript', value: 28, color: '#f7df1e' },
+        { name: 'Python', value: 20, color: '#3776ab' },
+        { name: 'CSS', value: 10, color: '#1572b6' },
+        { name: 'HTML', value: 7, color: '#e34f26' }
+      ];
+
+      return (
+        <SortableCard id={card.id} className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-4 card dashboard-card min-h-[320px]`}>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Languages Used</h2>
+          </div>
+          
+          {isLoading ? (
+            <div className="space-y-3 pr-1">
+              <Skeleton className="h-16 w-full rounded-md" />
+              <Skeleton className="h-16 w-full rounded-md" />
+              <Skeleton className="h-16 w-full rounded-md" />
+            </div>
+          ) : (
+            <div className="h-60">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={languageData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={80}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {languageData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: any) => [`${value}%`, 'Usage']}
+                    labelFormatter={(label: any) => `${label}`}
+                    contentStyle={{
+                      backgroundColor: 'var(--bg-color)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '8px',
+                      fontSize: '12px'
+                    }}
+                  />
+                  <Legend 
+                    formatter={(value: any) => <span style={{ fontSize: '12px', color: 'var(--text-color)' }}>{value}</span>}
+                    iconSize={10}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           )}
         </SortableCard>
       );
@@ -397,10 +449,10 @@ export default function Dashboard() {
           console.error('Failed to parse card order from localStorage:', e);
         }
       }
-    }
-    return [
-      { id: 'github-activity', title: 'Recent Activity', type: 'github-activity', colSpan: 'col-span-1 lg:col-span-3' },
+    }    return [
+      { id: 'github-activity', title: 'Recent Activity', type: 'github-activity', colSpan: 'col-span-1 lg:col-span-2' },
       { id: 'goals', title: "Today's Goals", type: 'goals', colSpan: 'col-span-1' },
+      { id: 'languages', title: 'Languages Used', type: 'languages', colSpan: 'col-span-1' },
       { id: 'pull-requests', title: 'Pull Requests', type: 'pull-requests', colSpan: 'col-span-1 lg:col-span-2' },
       { id: 'repositories', title: 'Top Repositories', type: 'repositories', colSpan: 'col-span-1 lg:col-span-2' }
     ];
@@ -862,9 +914,7 @@ export default function Dashboard() {
                   (themeColors?.secondary || '#6d28d9')}
           />
         )}
-      </div>
-
-      {/* Header */}
+      </div>      {/* Header */}
       <header className="border-b border-gray-200 dark:border-gray-800 py-4 px-6 bg-white dark:bg-gray-900 shadow-sm">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
@@ -882,71 +932,8 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          <div className="flex items-center space-x-3">
-            {/* Layout management dropdown */}
-            <div className="relative group">
-              <button
-                className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 transform hover:scale-105"
-                title="Manage layouts"
-                aria-label="Layout management"
-              >
-                <svg className="h-4 w-4 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-              </button>
-              
-              {/* Dropdown menu */}
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <div className="p-2">
-                  <button
-                    onClick={() => {
-                      const name = prompt('Enter layout name:');
-                      if (name) saveLayout(name);
-                    }}
-                    className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                  >
-                    Save Current Layout
-                  </button>
-                  
-                  {Object.keys(savedLayouts).length > 0 && (
-                    <>
-                      <hr className="my-2 border-gray-200 dark:border-gray-600" />
-                      <div className="text-xs text-gray-500 dark:text-gray-400 px-3 py-1 font-medium">Saved Layouts</div>
-                      {Object.keys(savedLayouts).map(layoutName => (
-                        <div key={layoutName} className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md">
-                          <button
-                            onClick={() => loadLayout(layoutName)}
-                            className="text-sm text-gray-700 dark:text-gray-300 flex-1 text-left"
-                          >
-                            {layoutName}
-                          </button>
-                          <button
-                            onClick={() => deleteLayout(layoutName)}
-                            className="text-red-500 hover:text-red-700 ml-2"
-                            title="Delete layout"
-                          >
-                            <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            <button
-              onClick={resetLayout}
-              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 transform hover:scale-105"
-              title="Reset layout to default"
-              aria-label="Reset dashboard layout"
-            >
-              <svg className="h-4 w-4 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
+          {/* Centered buttons */}
+          <div className="flex items-center justify-center space-x-3 flex-1">
             <button
               className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 transform hover:scale-105"
               aria-label="Refresh dashboard"
@@ -967,8 +954,8 @@ export default function Dashboard() {
                 <Moon className="h-4 w-4 text-gray-700 dark:text-gray-300" />
               )}
             </button>
-            {/* Visual Settings moved to its own section above main content */}
           </div>
+
           <div className="h-7 w-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
             GH
           </div>
