@@ -80,6 +80,74 @@
   to { transform: translate(-50%, -50%) rotate(-360deg); }
 }
 
+/* Drag and Drop Animations */
+@keyframes dragStart {
+  from { 
+    transform: scale(1) rotate(0deg);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  to { 
+    transform: scale(1.05) rotate(2deg);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+}
+
+@keyframes dragOver {
+  0% { 
+    transform: scale(1);
+    border-color: transparent;
+  }
+  50% { 
+    transform: scale(1.02);
+    border-color: rgb(59, 130, 246);
+  }
+  100% { 
+    transform: scale(1);
+    border-color: transparent;
+  }
+}
+
+@keyframes cardHover {
+  from {
+    transform: translateY(0);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  to {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+}
+
+@keyframes dropZoneActive {
+  0% { 
+    background-color: transparent;
+    border-color: transparent;
+  }
+  50% { 
+    background-color: rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+  100% { 
+    background-color: transparent;
+    border-color: transparent;
+  }
+}
+
+@keyframes dropSuccess {
+  0% {
+    transform: scale(1.05);
+    box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    transform: scale(0.98);
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+}
+
 /* Animation Classes */
 .animate-fade-in {
   animation: fadeIn 0.5s ease-out forwards;
@@ -141,6 +209,37 @@
 
 .animate-delay-500 {
   animation-delay: 500ms;
+}
+
+/* Drag and Drop Classes */
+.card-dragging {
+  animation: dragStart 0.2s ease-out forwards;
+  z-index: 1000;
+}
+
+.card-drag-over {
+  animation: dragOver 0.5s ease-in-out infinite;
+}
+
+.card-hover {
+  transition: all 0.2s ease-out;
+}
+
+.card-hover:hover {
+  animation: cardHover 0.2s ease-out forwards;
+}
+
+.drop-zone-active {
+  animation: dropZoneActive 1s ease-in-out infinite;
+}
+
+/* Enhanced drag and drop transitions */
+.card-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-drop-animation {
+  animation: dropSuccess 0.5s ease-out;
 }
 
 /* Staggered Animations */
@@ -273,4 +372,68 @@
     transform: scale(1.5);
     opacity: 0;
   }
+}
+
+/* Enhanced drag and drop transitions */
+.card-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-drop-animation {
+  animation: dropSuccess 0.5s ease-out;
+}
+
+/* Grid transitions */
+.dashboard-grid {
+  transition: all 0.3s ease-out;
+}
+
+.dashboard-grid.dragging {
+  transition: none;
+}
+
+/* Drag overlay improvements */
+.drag-overlay {
+  pointer-events: none;
+  z-index: 9999;
+  filter: drop-shadow(0 20px 25px rgba(0, 0, 0, 0.25));
+}
+
+/* Card sorting states */
+.sortable-item {
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+.sortable-item.sorting {
+  z-index: 1000;
+}
+
+.sortable-item.placeholder {
+  opacity: 0.5;
+  transform: scale(0.95);
+  border: 2px dashed rgba(59, 130, 246, 0.5);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+/* Touch device improvements */
+@media (pointer: coarse) {
+  .drag-handle {
+    opacity: 1 !important;
+    padding: 12px;
+  }
+  
+  .sortable-item {
+    touch-action: manipulation;
+  }
+}
+
+/* High contrast mode adjustments */
+.high-contrast .drag-handle {
+  border: 2px solid currentColor;
+  background: var(--bg-primary);
+}
+
+.high-contrast .sortable-item.placeholder {
+  border-color: var(--text-primary);
+  background: var(--bg-secondary);
 }
