@@ -21,7 +21,7 @@ export function AnimatedBackground({
   
   // Checkmark and commit elements
   const checkmarkPath = "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z";
-  const commitDotRadius = 3;
+  const commitDotRadius = 4; // Increased dot size for better visibility
   const codeElements = ['{', '}', ';', '()', '[]', '//', '=>', '<>', '&&', '||'];
   
   useEffect(() => {
@@ -86,8 +86,16 @@ export function AnimatedBackground({
         }
       };
       
-      // Create initial elements (number based on canvas size)
-      const elementCount = Math.floor((canvas.width * canvas.height) / 15000);
+      // Create initial elements (number based on canvas size and variant)
+      let elementCount = Math.floor((canvas.width * canvas.height) / 15000);
+      
+      // Adjust density based on variant
+      if (variant === 'dots') {
+        elementCount = Math.floor(elementCount * 1.5); // More dots
+      } else if (variant === 'checkmarks') {
+        elementCount = Math.floor(elementCount * 0.8); // Fewer checkmarks
+      }
+      
       createElements(elementCount);
       
       // Animation loop
@@ -110,19 +118,33 @@ export function AnimatedBackground({
           ctx.strokeStyle = color;
           
           if (element.type === 'text' && element.content) {
-            ctx.font = `${element.size}px JetBrains Mono, monospace`;
+            // Code elements
+            ctx.font = `${element.size}px monospace`;
             ctx.fillText(element.content, element.x, element.y);
           } else if (element.type === 'dot') {
+            // Dots with subtle glow effect
             ctx.beginPath();
             ctx.arc(element.x, element.y, element.size, 0, Math.PI * 2);
             ctx.fill();
+            
+            // Add subtle glow
+            ctx.globalAlpha = element.opacity * opacity * 0.4;
+            ctx.beginPath();
+            ctx.arc(element.x, element.y, element.size * 1.5, 0, Math.PI * 2);
+            ctx.fill();
           } else if (element.type === 'checkmark') {
+            // Simpler checkmark implementation that works across browsers
             ctx.save();
             ctx.translate(element.x, element.y);
-            ctx.scale(element.size / 24, element.size / 24);
+            const checkSize = element.size * 0.8;
+            
+            // Draw checkmark manually instead of using Path2D
             ctx.beginPath();
-            const path = new Path2D(checkmarkPath);
-            ctx.fill(path);
+            ctx.moveTo(-checkSize/2, 0);
+            ctx.lineTo(-checkSize/6, checkSize/2);
+            ctx.lineTo(checkSize/2, -checkSize/3);
+            ctx.lineWidth = checkSize/4;
+            ctx.stroke();
             ctx.restore();
           }
         });

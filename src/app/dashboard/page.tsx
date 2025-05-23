@@ -2,6 +2,7 @@
 
 import React, { useState, FormEvent, useEffect, useMemo } from 'react';
 import { ExternalLink, Github, Moon, RefreshCcw, Sun } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { AnimatedBackground } from '@/components/ui/animated-background';
@@ -366,8 +367,8 @@ export default function Dashboard() {
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex items-center space-x-4 hover:opacity-90 transition-opacity">
-              <div className="h-8 w-8 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center">
-                <Github className="h-5 w-5 text-white" />
+              <div className="h-8 w-8 rounded-md overflow-hidden flex items-center justify-center">
+                <Image src="/Group 2.svg" alt="DevDashboard Logo" width={32} height={32} className="h-full w-full" />
               </div>
               <h1
                 className="px-4 py-2 text-white rounded-md text-sm transition-all duration-300 transform hover:scale-105 hover:shadow-md button-press glow-on-hover theme-button"
