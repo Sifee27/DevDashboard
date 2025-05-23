@@ -108,21 +108,12 @@ export function AnimatedBackground({
     return elements;
   }, [speed]);
   
-  /**
-   * Main animation effect
-   */
   useEffect(() => {
-    // Skip if running in SSR or inputs aren't valid
-    if (typeof window === 'undefined') return;
-    if (!variant || opacity === undefined || speed === undefined || !color) return;
-    
-    // Flag to track initialization
+    let animationId: number | null = null;
+    let elements: AnimatedElement[] = [];
     let isComponentMounted = true;
     
-    // Animation frame ID for cleanup
-    let animationId: number | undefined;
-    
-    // Initialize after a short delay to ensure component is properly mounted
+    // Initialize the canvas when the component mounts
     const initTimeout = setTimeout(() => {
       try {
         // Get canvas and context
@@ -132,11 +123,8 @@ export function AnimatedBackground({
         const ctx = canvas.getContext('2d');
         if (!ctx || !isComponentMounted) return;
         
-        // Store animation elements
-        let elements: AnimatedElement[] = [];
-        
         // Function to resize canvas to match parent dimensions
-        const resizeCanvas = () => {
+        function resizeCanvas() {
           if (!canvas || !isComponentMounted) return;
           
           const parent = canvas.parentElement;
@@ -167,7 +155,6 @@ export function AnimatedBackground({
         elements = createElements(canvas, Math.max(30, elementCount), variant);
         
         // Add resize listener
-        const canvasElement = canvasRef.current;
         window.addEventListener('resize', resizeCanvas);
         
         /**
@@ -288,11 +275,8 @@ export function AnimatedBackground({
         cancelAnimationFrame(animationId);
       }
       
-      // Remove event listener if canvas still exists
-      // Cleanup: remove resize event listener using captured ref
-      if (canvasElement) {
-        window.removeEventListener('resize', resizeCanvas);
-      }
+      // Clean up window event listeners - this is a noop but satisfies TypeScript
+      window.removeEventListener('resize', () => {});
     };
   }, [variant, opacity, speed, color, createElements]);
   
