@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, FormEvent, useEffect, useMemo } from 'react';
+import React, { useState, FormEvent, useEffect, useMemo, useCallback } from 'react';
 import { ExternalLink, Moon, RefreshCcw, Sun } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -331,17 +331,16 @@ export default function Dashboard() {
   const [visualSettings, setVisualSettings] = useState<VisualSettingsState>(initialVisualSettings);
 
   // Save visual settings to localStorage
-  const saveVisualSettings = (settings: VisualSettingsState) => {
+  const saveVisualSettings = useCallback((settings: VisualSettingsState) => {
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem('visualSettings', JSON.stringify(settings));
     }
-  };
+  }, []);
   
   // Update visual settings when they change
   useEffect(() => {
     saveVisualSettings(visualSettings);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visualSettings]);
+  }, [visualSettings, saveVisualSettings]);
 
   // Show confetti state
   const [showConfetti, setShowConfetti] = useState(false);

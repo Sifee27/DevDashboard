@@ -257,7 +257,7 @@ export function AnimatedBackground({
                 ctx.stroke();
                 ctx.restore();
               }
-            } catch (error) {
+            } catch (_) {
               // Silently handle errors in individual elements
               // to prevent breaking the entire animation
             }
@@ -288,8 +288,9 @@ export function AnimatedBackground({
       }
       
       // Remove event listener if canvas still exists
-      if (canvasRef.current) {
-        const canvas = canvasRef.current;
+      // Copy ref to variable for cleanup to avoid React hooks warning
+      const canvasElement = canvasRef.current;
+      if (canvasElement) {
         window.removeEventListener('resize', () => {});
       }
     };

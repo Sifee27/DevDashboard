@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
+// Import only the type, not the actual module (which we'll load dynamically)
+import type confetti from 'canvas-confetti';
 
 // Define the props interface
 interface ConfettiEffectProps {
@@ -15,7 +17,14 @@ interface ConfettiEffectProps {
 export function ConfettiEffect({ trigger = false, onComplete }: ConfettiEffectProps) {
   // Initialize state
   const [played, setPlayed] = useState<boolean>(false);
-  const [confettiModule, setConfettiModule] = useState<any>(null);
+  
+  // Define a proper type for the confetti module
+  type ConfettiFunction = (options?: confetti.Options) => Promise<null>;
+  interface ConfettiModule {
+    default: ConfettiFunction;
+    reset: () => void;
+  }
+  const [confettiModule, setConfettiModule] = useState<ConfettiModule | null>(null);
 
   // Load the confetti module dynamically to avoid SSR issues
   useEffect(() => {
@@ -24,9 +33,7 @@ export function ConfettiEffect({ trigger = false, onComplete }: ConfettiEffectPr
 
     // Dynamically import the confetti module
     import('canvas-confetti')
-      .then(module => {
-        setConfettiModule(module.default);
-      })
+      .then(module => setConfettiModule(module as unknown as ConfettiModule))
       .catch(error => {
         console.error('Failed to load confetti module:', error);
       });
