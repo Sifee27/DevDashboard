@@ -2,6 +2,23 @@
 
 import React, { useRef, useEffect } from 'react';
 
+// Define element type outside component to avoid TDZ issues
+type Element = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  content?: string;
+  size: number;
+  opacity: number;
+  type: string;
+};
+
+// Constants moved outside component to avoid TDZ issues
+const CODE_ELEMENTS = ['{', '}', ';', '()', '[]', '//', '=>', '<>', '&&', '||'];
+const COMMIT_DOT_RADIUS = 4;
+const CHECKMARK_PATH = "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z";
+
 type AnimatedBackgroundProps = {
   variant?: 'code' | 'dots' | 'checkmarks';
   opacity?: number;
@@ -19,28 +36,27 @@ export function AnimatedBackground({
 }: AnimatedBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Checkmark and commit elements
-  const checkmarkPath = "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z";
-  const commitDotRadius = 4; // Increased dot size for better visibility
-  const codeElements = ['{', '}', ';', '()', '[]', '//', '=>', '<>', '&&', '||'];
-  
   useEffect(() => {
+    // Early return if dependencies aren't ready
+    if (!variant || !opacity || !speed || !color) return;
+    
     // Store animation frame ID for cleanup
-    let animationId: number;
+    let animationId: number | undefined;
     
-    // Define element type
-    type Element = {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      content?: string;
-      size: number;
-      opacity: number;
-      type: string;
-    };
+    // Get canvas and context first - if these fail, don't proceed
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      console.error("Canvas reference not available");
+      return;
+    }
     
-    // Array to store animation elements
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.error("Could not get 2D context");
+      return;
+    }
+    
+    // Array to store animation elements - created after canvas check
     const elements: Element[] = [];
     
     // Function to clear all elements
@@ -51,19 +67,6 @@ export function AnimatedBackground({
     // Initialize or re-initialize the animation
     const initializeAnimation = () => {
       console.log(`Initializing ${variant} background animation`); // Debug log
-      
-      // Get canvas and context
-      const canvas = canvasRef.current;
-      if (!canvas) {
-        console.error('Canvas reference not available');
-        return null;
-      }
-      
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        console.error('Failed to get 2D context from canvas');
-        return null;
-      }
       
       // Force a specific size initially to avoid zero dimensions
       canvas.width = window.innerWidth;
@@ -99,23 +102,46 @@ export function AnimatedBackground({
       // Clear any existing elements
       clearElements();
       
-      // Initialize elements based on variant
+      // Create initial elements based on variant
       const createElements = (count: number) => {
-        for (let i = 0; i < count; i++) {
+        // Make sure we have a valid count
+        const safeCount = Math.max(1, count);
+        
+        for (let i = 0; i < safeCount; i++) {
+          // Calculate position and velocity
           const x = Math.random() * canvas.width;
           const y = Math.random() * canvas.height;
-          const vx = (Math.random() - 0.5) * speed;
-          const vy = (Math.random() - 0.5) * speed;
-          const size = Math.random() * 10 + 10;
-          const elementOpacity = Math.random() * 0.5 + 0.1;
+          const baseSpeed = 0.2 * speed;
+          const vx = (Math.random() - 0.5) * baseSpeed;
+          const vy = (Math.random() - 0.5) * baseSpeed;
           
+          // Create element based on variant type
           if (variant === 'code') {
-            const content = codeElements[Math.floor(Math.random() * codeElements.length)];
-            elements.push({ x, y, vx, vy, content, size, opacity: elementOpacity, type: 'text' });
+            const content = CODE_ELEMENTS[Math.floor(Math.random() * CODE_ELEMENTS.length)];
+            const size = Math.floor(Math.random() * 8) + 10; // 10-18px
+            elements.push({
+              x, y, vx, vy,
+              content,
+              size,
+              opacity: Math.random() * 0.5 + 0.2, // 0.2-0.7
+              type: 'text'
+            });
           } else if (variant === 'dots') {
-            elements.push({ x, y, vx, vy, size: commitDotRadius, opacity: elementOpacity, type: 'dot' });
+            const size = Math.floor(Math.random() * 2) + COMMIT_DOT_RADIUS - 2; // 2-4px
+            elements.push({
+              x, y, vx, vy,
+              size,
+              opacity: Math.random() * 0.5 + 0.3, // 0.3-0.8
+              type: 'dot'
+            });
           } else if (variant === 'checkmarks') {
-            elements.push({ x, y, vx, vy, size, opacity: elementOpacity, type: 'checkmark' });
+            const size = Math.floor(Math.random() * 8) + 12; // 12-20px
+            elements.push({
+              x, y, vx, vy,
+              size,
+              opacity: Math.random() * 0.4 + 0.2, // 0.2-0.6
+              type: 'checkmark'
+            });
           }
         }
       };
@@ -218,7 +244,7 @@ export function AnimatedBackground({
                 ctx.translate(element.x, element.y);
                 const checkSize = element.size * 0.8;
                 
-                // Draw checkmark manually for maximum browser compatibility
+                // Draw checkmark manually instead of using Path2D for compatibility
                 ctx.beginPath();
                 ctx.moveTo(-checkSize/2, 0);
                 ctx.lineTo(-checkSize/6, checkSize/2);
@@ -250,7 +276,7 @@ export function AnimatedBackground({
       return () => {
         console.log('Cleaning up animation'); // Debug log
         window.removeEventListener('resize', resizeCanvas);
-        cancelAnimationFrame(animationId);
+        if (typeof animationId === 'number') cancelAnimationFrame(animationId);
       };
     };
     
@@ -261,12 +287,9 @@ export function AnimatedBackground({
     return () => {
       console.log('Component unmounting, cleaning up animation'); // Debug log
       if (cleanup) cleanup();
-      if (animationId) cancelAnimationFrame(animationId);
+      if (typeof animationId === 'number') cancelAnimationFrame(animationId);
     };
-  }, [variant, opacity, speed, color, checkmarkPath, commitDotRadius, codeElements]);
-  
-  // Debug log on render
-  console.log(`Rendering AnimatedBackground with variant: ${variant}, speed: ${speed}`);
+  }, [variant, opacity, speed, color]);
   
   return (
     <canvas 
