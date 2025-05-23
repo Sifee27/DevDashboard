@@ -22,6 +22,7 @@ export function AnimatedBackground({
   // Checkmark and commit elements
   const checkmarkPath = "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z";
   const commitDotRadius = 3;
+  const codeElements = ['{', '}', ';', '()', '[]', '//', '=>', '<>', '&&', '||'];
   
   useEffect(() => {
     let animationId: number;
@@ -147,8 +148,6 @@ export function AnimatedBackground({
       if (cleanup) cleanup();
       cancelAnimationFrame(animationId);
     };
-    // Code pattern elements moved inside useEffect to prevent dependency changes
-    const codeElements = ['{', '}', ';', '()', '[]', '//', '=>', '<>', '&&', '||'];
   }, [variant, opacity, speed, color, checkmarkPath, commitDotRadius]);
   
   return (
