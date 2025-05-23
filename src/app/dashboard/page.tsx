@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, FormEvent, useEffect, useMemo } from 'react';
-import { Activity, ExternalLink, Github, GitMerge, GitPullRequest, Moon, RefreshCcw, Sun, Trash2, XCircle } from 'lucide-react';
+import { ExternalLink, Github, Moon, RefreshCcw, Sun } from 'lucide-react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -274,12 +275,12 @@ export default function Dashboard() {
       <header className="border-b border-gray-200 dark:border-gray-800 py-4 px-6 bg-white dark:bg-gray-900 shadow-sm">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <a href="/" className="flex items-center space-x-4 hover:opacity-90 transition-opacity">
+            <Link href="/" className="flex items-center space-x-4 hover:opacity-90 transition-opacity">
               <div className="h-8 w-8 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center">
                 <Github className="h-5 w-5 text-white" />
               </div>
               <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-blue-500 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>DevDashboard</h1>
-            </a>
+            </Link>
           </div>
           
           <div className="flex items-center space-x-3">

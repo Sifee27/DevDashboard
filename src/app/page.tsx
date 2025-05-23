@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Code2, BookOpen, Github, GitPullRequest, GitCommit, AlertCircle } from 'lucide-react';
+// No icons needed after removing the How It Works section
 
 export default function Home() {
   // Force dark mode for the landing page
