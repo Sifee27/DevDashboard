@@ -237,7 +237,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto text-center">
             <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800 rounded-lg p-5">
               <h3 className="text-base font-bold mb-2 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Focus on what matters</h3>
-              <p className="text-gray-400 text-sm">No more context switching between GitHub, Jira, and your to-do list. Everything you need is in one dashboard.</p>
+              <p className="text-gray-400 text-sm">No more constant switching between GitHub, Jira, and your to-do list. Everything you need is in one dashboard.</p>
             </div>
             <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800 rounded-lg p-5">
               <h3 className="text-base font-bold mb-2 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Minimize distractions</h3>
