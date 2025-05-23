@@ -1,0 +1,552 @@
+"use client";
+
+import React, { useState, FormEvent, useEffect, useMemo } from 'react';
+import { Activity, ExternalLink, Github, GitMerge, GitPullRequest, Moon, RefreshCcw, Sun, Trash2, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { cn } from "../../lib/utils";
+import { Skeleton } from '@/components/ui/skeleton';
+import { TaskItem } from '@/components/ui/task-item';
+import { PRStatusIcon } from '@/components/ui/pr-status-icon';
+
+// Component types
+type CommitActivity = Array<{
+  date: string;
+  count: number;
+}>;
+
+type PullRequest = {
+  id: string;
+  title: string;
+  repository: string;
+  status: 'open' | 'merged' | 'draft';
+  url: string;
+};
+
+type Repository = {
+  name: string;
+  stars: number;
+  lastCommitDate: string;
+  description?: string;
+};
+
+type ChecklistItem = {
+  id: string;
+  text: string;
+  completed: boolean;
+};
+
+export default function Dashboard() {
+  // Loading states
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Repository filter state
+  const [repoFilter, setRepoFilter] = useState<'stars' | 'activity'>('stars');
+  // Theme state - initialized from localStorage or system preference
+  const [darkMode, setDarkMode] = useState(() => {
+    // Check if we're in the browser environment
+    if (typeof window !== 'undefined') {
+      // First try to get from localStorage
+      const savedTheme = localStorage.getItem('devdashboard-theme');
+      if (savedTheme !== null) {
+        return savedTheme === 'dark';
+      }
+      // If no saved preference, check system preference
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    // Default to dark mode if not in browser
+    return true;
+  });
+  
+  // Toggle dark/light mode
+  const toggleTheme = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('devdashboard-theme', newDarkMode ? 'dark' : 'light');
+    }
+    
+    // Update document class for global theme styling
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+  
+  // Apply the theme when component mounts
+  React.useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+  
+  // Simulate loading for demo purposes
+  React.useEffect(() => {
+    // Show loading state initially
+    setIsLoading(true);
+    
+    // Simulate API/data loading delay
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  // We'll define filteredRepositories after repositories is initialized
+  
+  // Setup dnd sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px of movement required before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+  
+  // Input state for new tasks
+  const [newTask, setNewTask] = useState('');
+  
+  // Generate sample commit activity data for the heatmap
+  const generateCommitActivity = (): CommitActivity => {
+    const activity: CommitActivity = [];
+    const now = new Date();
+    
+    // Generate data for the last 12 weeks (84 days)
+    for (let i = 83; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(now.getDate() - i);
+      // Higher probability of commits on weekdays
+      const dayOfWeek = date.getDay();
+      const isWeekday = dayOfWeek > 0 && dayOfWeek < 6;
+      const maxCommits = isWeekday ? 8 : 4;
+      activity.push({
+        date: date.toISOString().split('T')[0],
+        count: Math.floor(Math.random() * maxCommits) // 0-7 commits on weekdays, 0-3 on weekends
+      });
+    }
+    
+    return activity;
+  };
+  
+  // Sample data
+  const commitActivity = generateCommitActivity();
+  
+  // Sample pull requests
+  const [pullRequests] = useState<PullRequest[]>([
+    { id: '1', title: 'Fix authentication bug', repository: 'auth-service', status: 'open', url: '#' },
+    { id: '2', title: 'Add dark mode toggle', repository: 'ui-components', status: 'merged', url: '#' },
+    { id: '3', title: 'Implement search feature', repository: 'search-api', status: 'draft', url: '#' },
+    { id: '4', title: 'Update documentation', repository: 'docs', status: 'open', url: '#' },
+    { id: '5', title: 'Optimize database queries', repository: 'backend', status: 'open', url: '#' },
+  ]);
+  
+  // Sample repositories
+  const [repositories] = useState<Repository[]>([
+    { name: 'frontend-app', stars: 24, lastCommitDate: '2025-05-20', description: 'Main frontend application' },
+    { name: 'api-service', stars: 16, lastCommitDate: '2025-05-18', description: 'Core API services' },
+    { name: 'ui-components', stars: 57, lastCommitDate: '2025-05-15', description: 'Reusable UI components' },
+    { name: 'utilities', stars: 12, lastCommitDate: '2025-05-10', description: 'Helper functions and utilities' },
+    { name: 'docs-site', stars: 8, lastCommitDate: '2025-05-22', description: 'Documentation website' },
+    { name: 'backend', stars: 32, lastCommitDate: '2025-05-19', description: 'Backend services and API endpoints' },
+  ]);
+  
+  // Filter repositories based on selected filter
+  const filteredRepositories = useMemo(() => {
+    return [...repositories].sort((a, b) => {
+      if (repoFilter === 'stars') {
+        // Sort by stars (descending)
+        return b.stars - a.stars;
+      } else {
+        // Sort by activity (most recent first)
+        return new Date(b.lastCommitDate).getTime() - new Date(a.lastCommitDate).getTime();
+      }
+    });
+  }, [repositories, repoFilter]);
+  
+  // Load checklist from localStorage or use default items
+  const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      const savedChecklist = localStorage.getItem('devdashboard-checklist');
+      if (savedChecklist) {
+        try {
+          return JSON.parse(savedChecklist);
+        } catch (e) {
+          console.error('Failed to parse checklist from localStorage:', e);
+        }
+      }
+    }
+    return [
+      { id: '1', text: 'Fix login bug', completed: false },
+      { id: '2', text: 'Add dark mode toggle', completed: true },
+      { id: '3', text: 'Implement search feature', completed: false },
+      { id: '4', text: 'Update README', completed: false },
+      { id: '5', text: 'Deploy to production', completed: false },
+    ];
+  });
+  
+  // Save checklist to localStorage when it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('devdashboard-checklist', JSON.stringify(checklist));
+    }
+  }, [checklist]);
+  
+  // Handle task reordering (drag and drop)
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setChecklist((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        
+        // Notify user of the change
+        toast.success(`Task reordered`);
+        
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+  
+  // Toggle checklist item completion
+  const toggleChecklistItem = (id: string) => {
+    setChecklist(checklist.map(item => {
+      if (item.id === id) {
+        const newState = !item.completed;
+        // Show toast notification based on completion state
+        if (newState) {
+          toast.success('Task completed! 🎉');
+        }
+        return { ...item, completed: newState };
+      }
+      return item;
+    }));
+  };
+  
+  // Add new task
+  const addTask = (e: FormEvent) => {
+    e.preventDefault();
+    if (newTask.trim()) {
+      const newId = String(Date.now());
+      const newTaskItem = { id: newId, text: newTask.trim(), completed: false };
+      setChecklist([...checklist, newTaskItem]);
+      setNewTask('');
+      toast.success('New task added');
+    }
+  };
+  
+  // Delete a task
+  const deleteTask = (id: string) => {
+    setChecklist(checklist.filter(item => item.id !== id));
+    toast('Task removed', { icon: '🗑️' });
+  };
+  
+  // Clear completed tasks
+  const clearCompleted = () => {
+    const completedCount = checklist.filter(item => item.completed).length;
+    setChecklist(checklist.filter(item => !item.completed));
+    toast(`Cleared ${completedCount} completed ${completedCount === 1 ? 'task' : 'tasks'}`);
+  };
+  
+  // Get status color for PR
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'open': return 'bg-green-500 dark:bg-green-600 text-white';
+      case 'merged': return 'bg-purple-500 dark:bg-purple-600 text-white';
+      case 'draft': return 'bg-gray-500 dark:bg-gray-600 text-white';
+      default: return 'bg-gray-500 dark:bg-gray-600 text-white';
+    }
+  };
+  
+  return (
+    <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-200" style={{ fontFamily: 'var(--font-space-grotesk)' }}>
+      {/* Header */}
+      <header className="border-b border-gray-200 dark:border-gray-800 py-4 px-6 bg-white dark:bg-gray-900 shadow-sm">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <a href="/" className="flex items-center space-x-4 hover:opacity-90 transition-opacity">
+              <div className="h-8 w-8 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center">
+                <Github className="h-5 w-5 text-white" />
+              </div>
+              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-blue-500 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>DevDashboard</h1>
+            </a>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            <button 
+              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+              aria-label="Refresh dashboard"
+            >
+              <RefreshCcw className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+            </button>
+            <button 
+              className="ml-1 p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 flex items-center justify-center"
+              aria-label="Toggle theme"
+              onClick={toggleTheme}
+            >
+              {darkMode ? 
+                <Sun className="h-4 w-4 text-gray-700 dark:text-gray-300" /> : 
+                <Moon className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+              }
+            </button>
+            <div className="h-7 w-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
+              GH
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <main className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {/* Top Row: GitHub Activity + Today's Goals */}
+          <div className="col-span-1 lg:col-span-3 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Recent Activity</h2>
+              <span className="text-xs text-gray-600 dark:text-gray-400 px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">Last 12 weeks</span>
+            </div>
+            
+            {/* Contribution heatmap - GitHub style */}
+            <div className="pb-2">
+              <div className="flex">
+                {/* Month labels */}
+                <div className="flex flex-col justify-between pr-3 text-sm text-gray-500 dark:text-gray-400">
+                  <span>May</span>
+                  <span>Jun</span>
+                  <span>Jul</span>
+                </div>
+                
+                {/* Contribution grid */}
+                <div className="flex-1">
+                  <div className="grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gridTemplateRows: 'repeat(7, 1fr)', gap: '2px' }}>
+                    {Array.from({ length: 84 }).map((_, index) => {
+                      const day = commitActivity[index] || { count: 0 };
+                      
+                      // Map activity level to color - Theme responsive
+                      let bgColorClass = 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'; // Default (no activity)
+                      if (day.count > 0) {
+                        if (day.count === 1) bgColorClass = 'bg-green-100 dark:bg-green-900';
+                        else if (day.count < 3) bgColorClass = 'bg-green-200 dark:bg-green-800';
+                        else if (day.count < 5) bgColorClass = 'bg-green-300 dark:bg-green-700';
+                        else bgColorClass = 'bg-green-400 dark:bg-green-600';
+                      }
+                      
+                      return (
+                        <div 
+                          key={`cell-${index}`} 
+                          className={`aspect-square rounded-sm ${bgColorClass} hover:ring-1 hover:ring-blue-500 transition-all`}
+                          title={`${day.date}: ${day.count} commits`}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Legend */}
+              <div className="flex justify-end items-center mt-3 text-xs text-gray-500 dark:text-gray-400">
+                <span className="mr-2">Less</span>
+                <div className="w-3 h-3 rounded-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mr-1"></div>
+                <div className="w-3 h-3 rounded-sm bg-green-100 dark:bg-green-900 mr-1"></div>
+                <div className="w-3 h-3 rounded-sm bg-green-200 dark:bg-green-800 mr-1"></div>
+                <div className="w-3 h-3 rounded-sm bg-green-300 dark:bg-green-700 mr-1"></div>
+                <div className="w-3 h-3 rounded-sm bg-green-400 dark:bg-green-600 mr-1"></div>
+                <span>More</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Today&apos;s Goals - Now in the top row, right side */}
+          <div className="col-span-1 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Today&apos;s Goals</h2>
+            
+            <form onSubmit={addTask} className="mb-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={newTask}
+                  onChange={(e) => setNewTask(e.target.value)}
+                  placeholder="Add a new task..."
+                  className="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-xs text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <button 
+                  type="submit" 
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
+                    <path fillRule="evenodd" d="M7.75 2a.75.75 0 01.75.75V7h4.25a.75.75 0 110 1.5H8.5v4.25a.75.75 0 11-1.5 0V8.5H2.75a.75.75 0 010-1.5H7V2.75A.75.75 0 017.75 2z" />
+                  </svg>
+                </button>
+              </div>
+            </form>
+            
+            {isLoading ? (
+              <div className="space-y-3 max-h-[230px] mb-3">
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-full" />
+              </div>
+            ) : (
+              <div className="max-h-[230px] overflow-y-auto mb-3">
+                <DndContext 
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext items={checklist.map(item => item.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-1">
+                      {checklist.map(item => (
+                        <TaskItem 
+                          key={item.id}
+                          id={item.id}
+                          text={item.text}
+                          completed={item.completed}
+                          onToggle={toggleChecklistItem}
+                          onDelete={deleteTask}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
+            
+            {checklist.some(item => item.completed) && (
+              <div className="text-right">
+                <button 
+                  onClick={clearCompleted}
+                  className="text-xs text-blue-500 hover:text-blue-400 transition-colors"
+                >
+                  Clear completed
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {/* Bottom Row: Open Pull Requests and Top Repositories */}
+          <div className="col-span-1 lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Pull Requests</h2>
+              <div className="flex gap-2">
+                <button className="text-xs px-2 py-1 rounded-md bg-blue-500 text-white font-medium">All</button>
+                <button className="text-xs px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">Open</button>
+              </div>
+            </div>
+            
+            {isLoading ? (
+              <div className="space-y-3 pr-1">
+                <Skeleton className="h-16 w-full rounded-md" />
+                <Skeleton className="h-16 w-full rounded-md" />
+                <Skeleton className="h-16 w-full rounded-md" />
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+                {pullRequests.map(pr => (
+                  <div key={pr.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start gap-2">
+                        <PRStatusIcon 
+                          status={pr.status} 
+                          className={pr.status === 'open' ? 'text-green-500' : 
+                                    pr.status === 'merged' ? 'text-purple-500' : 
+                                    'text-gray-400'} 
+                          size={14} 
+                        />
+                        <h3 className="text-xs font-medium text-blue-500 truncate mb-1 flex-1">{pr.title}</h3>
+                      </div>
+                      <a href={pr.url} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300" aria-label="External link">
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                    <div className="flex items-center justify-between mt-2 pl-6">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{pr.repository}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(pr.status)}`}>
+                        {pr.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Top Repositories */}
+          <div className="col-span-1 lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Top Repositories</h2>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setRepoFilter('stars')} 
+                  className={cn(
+                    "text-xs px-2 py-1 rounded-md transition-colors",
+                    repoFilter === 'stars' 
+                      ? "bg-blue-500 text-white" 
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                  )}
+                >
+                  Most Starred
+                </button>
+                <button 
+                  onClick={() => setRepoFilter('activity')} 
+                  className={cn(
+                    "text-xs px-2 py-1 rounded-md transition-colors",
+                    repoFilter === 'activity' 
+                      ? "bg-blue-500 text-white" 
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                  )}
+                >
+                  Recent Activity
+                </button>
+              </div>
+            </div>
+            
+            {isLoading ? (
+              <div className="space-y-3 pr-1">
+                <Skeleton className="h-16 w-full rounded-md" />
+                <Skeleton className="h-16 w-full rounded-md" />
+                <Skeleton className="h-16 w-full rounded-md" />
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+                {filteredRepositories.map(repo => (
+                  <div key={repo.name} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <h3 className="text-xs font-medium text-blue-500 truncate mb-1">{repo.name}</h3>
+                    {repo.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate mb-2">{repo.description}</p>
+                    )}
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center">
+                        <svg className="h-3 w-3 mr-1" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z" />
+                        </svg>
+                        {repo.stars}
+                      </div>
+                      <span>Updated {new Date(repo.lastCommitDate).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+      
+      {/* Footer */}
+      <footer className="container mx-auto px-4 py-4 text-center text-xs text-[#8B949E] mt-6">
+        <p>
+          Built with <span className="text-[#F85149]">❤️</span> by a Developer for Developers | 
+          <a href="https://github.com/Sifee27/DevDashboard" className="text-[#58A6FF] hover:underline ml-1">GitHub</a>
+        </p>
+      </footer>
+    </div>
+  );
+}
