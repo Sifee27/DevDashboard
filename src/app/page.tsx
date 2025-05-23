@@ -87,8 +87,8 @@ export default function Home() {
             {/* Stats */}
             <div className="flex flex-wrap items-center justify-center gap-8 mb-10 animate-fade-in animate-delay-300">
               <div className="text-center">
-                <div className="text-3xl font-bold text-violet-400 mb-1">25k+</div>
-                <div className="text-xs text-gray-400">Developers</div>
+                <div className="text-3xl font-bold text-violet-400 mb-1">5o%+</div>
+                <div className="text-xs text-gray-400">Time </div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-400 mb-1">1M+</div>

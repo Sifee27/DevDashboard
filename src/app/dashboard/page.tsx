@@ -77,7 +77,6 @@ export default function Dashboard() {
   // Apply the theme when component mounts
   React.useEffect(() => {
     applyTheme(darkMode);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [darkMode]);
   
   // Simulate loading for demo purposes
