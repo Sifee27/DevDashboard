@@ -46,46 +46,61 @@ export function ConfettiEffect({ trigger = false, onComplete }: ConfettiEffectPr
     
     try {
       // Create confetti instance without additional options
-      // The Options type doesn't include 'resize' or 'useWorker'
       const myConfetti = confettiModule.create();
       
       if (!myConfetti) return;
       
-      // Fire multiple bursts for a more impressive effect
-      const end = Date.now() + 1000; // duration
-      const colors = ['#8b5cf6', '#6d28d9', '#4c1d95', '#7c3aed', '#5b21b6'];
+      // Enhanced confetti effect with wider screen coverage
+      const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#FFA500'];
+      const end = Date.now() + 2000; // longer duration for more impact
       
-      const frame = () => {
+      // Function to create a burst of confetti
+      const fireBurst = () => {
         // Left side burst
         myConfetti({
-          particleCount: 2,
+          particleCount: 50,
           angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: colors
+          spread: 80,
+          origin: { x: 0, y: 0.5 },
+          colors: colors,
+          scalar: 1.5 // larger confetti pieces
+        });
+        
+        // Center burst
+        myConfetti({
+          particleCount: 100,
+          angle: 90,
+          spread: 100,
+          origin: { x: 0.5, y: 0.3 },
+          colors: colors,
+          scalar: 1.8 // larger confetti pieces
         });
         
         // Right side burst
         myConfetti({
-          particleCount: 2,
+          particleCount: 50,
           angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: colors
+          spread: 80,
+          origin: { x: 1, y: 0.5 },
+          colors: colors,
+          scalar: 1.5 // larger confetti pieces
         });
-        
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        } else {
-          setPlayed(true);
-          if (onComplete && typeof onComplete === 'function') {
-            onComplete();
-          }
-        }
       };
       
-      // Start the animation
-      frame();
+      // Initial burst
+      fireBurst();
+      
+      // Set interval for continued bursts
+      const interval = setInterval(() => {
+        if (Date.now() > end) {
+          clearInterval(interval);
+          setPlayed(true);
+          if (onComplete) onComplete();
+          return;
+        }
+        
+        fireBurst();
+      }, 300); // Fire every 300ms for continuous effect
     } catch (error) {
       console.error('Error running confetti animation:', error);
       // Ensure played state is updated even if animation fails
