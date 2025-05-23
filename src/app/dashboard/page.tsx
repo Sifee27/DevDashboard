@@ -286,6 +286,10 @@ export default function Dashboard() {
     enableAnimations: true,
     backgroundStyle: 'code',
     enableMicrointeractions: true,
+    colorTheme: 'violet',
+    animationSpeed: 'normal',
+    layoutDensity: 'comfortable',
+    contrastMode: 'standard',
   });
 
   // Show confetti state
@@ -343,16 +347,26 @@ export default function Dashboard() {
                 <Moon className="h-4 w-4 text-gray-700 dark:text-gray-300" />
               )}
             </button>
-            <VisualSettings
-              onChangeAction={setVisualSettings}
-              className="transition-all duration-200 transform hover:scale-105"
-            />
+            {/* Visual Settings moved to its own section above main content */}
           </div>
           <div className="h-7 w-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
             GH
           </div>
         </div>
       </header>
+
+      {/* Visual Settings Panel */}
+      <div className="container mx-auto px-4 pt-6 pb-2">
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 mb-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Dashboard Settings</h2>
+            <VisualSettings
+              onChangeAction={setVisualSettings}
+              className="transition-all duration-200"
+            />
+          </div>
+        </div>
+      </div>
 
       <main className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
