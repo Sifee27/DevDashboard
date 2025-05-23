@@ -23,7 +23,7 @@ export function ConfettiEffect({ trigger = false, onComplete }: ConfettiEffectPr
   interface ConfettiModule {
     default: ConfettiFunction;
     reset: () => void;
-    create: (canvas?: HTMLCanvasElement, options?: any) => confetti.CreateTypes;
+    create: (canvas?: HTMLCanvasElement, options?: confetti.Options) => confetti.CreateTypes;
   }
   const [confettiModule, setConfettiModule] = useState<ConfettiModule | null>(null);
 
