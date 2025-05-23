@@ -17,7 +17,6 @@ type Element = {
 // Constants moved outside component to avoid TDZ issues
 const CODE_ELEMENTS = ['{', '}', ';', '()', '[]', '//', '=>', '<>', '&&', '||'];
 const COMMIT_DOT_RADIUS = 4;
-const CHECKMARK_PATH = "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z";
 
 type AnimatedBackgroundProps = {
   variant?: 'code' | 'dots' | 'checkmarks';
