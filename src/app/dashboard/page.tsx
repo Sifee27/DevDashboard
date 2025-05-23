@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useState, FormEvent, useEffect, useMemo } from 'react';
-import { ExternalLink, Github, Moon, RefreshCcw, Sun } from 'lucide-react';
+import { ExternalLink, Github, Moon, RefreshCcw, Sun, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { AnimatedBackground } from '@/components/ui/animated-background';
+import { ConfettiEffect } from '@/components/ui/confetti-effect';
+import { VisualSettings, VisualSettingsState } from '@/components/ui/visual-settings';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { cn } from "../../lib/utils";
@@ -224,14 +227,29 @@ export default function Dashboard() {
     setChecklist(checklist.map(item => {
       if (item.id === id) {
         const newState = !item.completed;
-        // Show toast notification based on completion state
-        if (newState) {
-          toast.success('Task completed! 🎉');
-        }
+        toast.success(newState ? 'Task completed! 🎉' : 'Task marked incomplete');
         return { ...item, completed: newState };
       }
       return item;
     }));
+    
+    // Check if all tasks are completed to trigger confetti
+    const updatedList = checklist.map(item => {
+      if (item.id === id) {
+        return { ...item, completed: !item.completed };
+      }
+      return item;
+    });
+    
+    if (visualSettings.enableMicrointeractions && 
+        updatedList.length > 0 && 
+        updatedList.every(item => item.completed)) {
+      setShowConfetti(true);
+      toast.success('All tasks completed! 🎉', {
+        style: { background: '#7c3aed', color: 'white' },
+        duration: 3000,
+      });
+    }
   };
   
   // Add new task
@@ -269,8 +287,37 @@ export default function Dashboard() {
     }
   };
   
+  // Reset confetti after it plays
+  const handleConfettiComplete = () => {
+    setTimeout(() => setShowConfetti(false), 1500);
+  };
+  
+  // Visual settings state
+  const [visualSettings, setVisualSettings] = useState<VisualSettingsState>({
+    enableAnimations: true,
+    backgroundStyle: 'code',
+    enableMicrointeractions: true,
+  });
+  
+  // Show confetti state
+  const [showConfetti, setShowConfetti] = useState(false);
+  
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-200" style={{ fontFamily: 'var(--font-space-grotesk)' }}>
+    <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-200 relative" style={{ fontFamily: 'var(--font-space-grotesk)' }}>
+      {/* Animated Background */}
+      {visualSettings.enableAnimations && visualSettings.backgroundStyle !== 'none' && (
+        <AnimatedBackground 
+          variant={visualSettings.backgroundStyle} 
+          opacity={0.04} 
+          speed={0.2} 
+          color={darkMode ? '#8b5cf6' : '#6d28d9'} 
+        />
+      )}
+      
+      {/* Confetti Effect */}
+      {visualSettings.enableMicrointeractions && (
+        <ConfettiEffect trigger={showConfetti} onComplete={handleConfettiComplete} />
+      )}
       {/* Header */}
       <header className="border-b border-gray-200 dark:border-gray-800 py-4 px-6 bg-white dark:bg-gray-900 shadow-sm">
         <div className="flex justify-between items-center">
@@ -285,24 +332,32 @@ export default function Dashboard() {
           
           <div className="flex items-center space-x-3">
             <button 
-              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 transform hover:scale-105"
               aria-label="Refresh dashboard"
             >
               <RefreshCcw className="h-4 w-4 text-gray-700 dark:text-gray-300" />
             </button>
             <button 
-              className="ml-1 p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 flex items-center justify-center"
-              aria-label="Toggle theme"
-              onClick={toggleTheme}
+              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 transform hover:scale-105"
+              onClick={() => {
+                setDarkMode(!darkMode);
+                document.documentElement.classList.toggle('dark');
+              }}
+              aria-label="Toggle dark mode"
             >
-              {darkMode ? 
-                <Sun className="h-4 w-4 text-gray-700 dark:text-gray-300" /> : 
+              {darkMode ? (
+                <Sun className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+              ) : (
                 <Moon className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-              }
+              )}
             </button>
-            <div className="h-7 w-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
-              GH
-            </div>
+            <VisualSettings 
+              onChange={setVisualSettings} 
+              className="transition-all duration-200 transform hover:scale-105"
+            />
+          </div>
+          <div className="h-7 w-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
+            GH
           </div>
         </div>
       </header>
@@ -310,7 +365,7 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Top Row: GitHub Activity + Today's Goals */}
-          <div className="col-span-1 lg:col-span-3 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
+          <div className="col-span-1 lg:col-span-3 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-700">
             <div className="flex justify-between items-center mb-5">
               <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Recent Activity</h2>
               <span className="text-xs text-gray-600 dark:text-gray-400 px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">Last 12 weeks</span>
@@ -341,11 +396,15 @@ export default function Dashboard() {
                         else bgColorClass = 'bg-green-400 dark:bg-green-600';
                       }
                       
+                      // Check if it's today's commit dot
+                      const isToday = day.date === new Date().toISOString().split('T')[0];
+                      const pulseEffect = isToday && visualSettings.enableMicrointeractions ? 'animate-pulse shadow-lg shadow-green-500/30 ring-2 ring-green-400 dark:ring-green-600 z-10' : '';
+                      
                       return (
                         <div 
                           key={`cell-${index}`} 
-                          className={`aspect-square rounded-sm ${bgColorClass} hover:ring-1 hover:ring-blue-500 transition-all`}
-                          title={`${day.date}: ${day.count} commits`}
+                          className={`aspect-square rounded-sm ${bgColorClass} hover:ring-1 hover:ring-blue-500 transition-all ${pulseEffect}`}
+                          title={`${day.date}: ${day.count} commits${isToday ? ' (Today)' : ''}`}
                         />
                       );
                     })}
@@ -367,7 +426,7 @@ export default function Dashboard() {
           </div>
           
           {/* Today&apos;s Goals - Now in the top row, right side */}
-          <div className="col-span-1 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
+          <div className="col-span-1 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-700">
             <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Today&apos;s Goals</h2>
             
             <form onSubmit={addTask} className="mb-4">
@@ -452,7 +511,7 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
                 {pullRequests.map(pr => (
-                  <div key={pr.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <div key={pr.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-md transition-all duration-200 transform hover:scale-[1.01] hover:translate-x-1">
                     <div className="flex justify-between items-start">
                       <div className="flex items-start gap-2">
                         <PRStatusIcon 
