@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Settings } from 'lucide-react';
 
 type VisualSettingsProps = {
-  onChange?: (settings: VisualSettingsState) => void;
+  onChangeAction: (settings: VisualSettingsState) => void; 
   className?: string;
 };
 
@@ -14,7 +14,7 @@ export type VisualSettingsState = {
   enableMicrointeractions: boolean;
 };
 
-export function VisualSettings({ onChange, className = '' }: VisualSettingsProps) {
+export function VisualSettings({ onChangeAction, className = '' }: VisualSettingsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [settings, setSettings] = useState<VisualSettingsState>({
     enableAnimations: true,
@@ -29,12 +29,12 @@ export function VisualSettings({ onChange, className = '' }: VisualSettingsProps
       if (savedSettings) {
         const parsed = JSON.parse(savedSettings);
         setSettings(parsed);
-        if (onChange) onChange(parsed);
+        onChangeAction(parsed);
       }
     } catch (error) {
       console.error("Failed to load visual settings", error);
     }
-  }, [onChange]);
+  }, [onChangeAction]);
 
   // Save settings to localStorage when changed
   const updateSettings = (newSettings: Partial<VisualSettingsState>) => {
@@ -44,12 +44,10 @@ export function VisualSettings({ onChange, className = '' }: VisualSettingsProps
     // Save to localStorage
     try {
       localStorage.setItem('visualSettings', JSON.stringify(updated));
+      onChangeAction(updated);
     } catch (error) {
       console.error("Failed to save visual settings", error);
     }
-    
-    // Notify parent component
-    if (onChange) onChange(updated);
   };
 
   return (

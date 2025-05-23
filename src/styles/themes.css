@@ -1,0 +1,115 @@
+/* Theme CSS Variables */
+
+:root {
+  /* Default dark theme */
+  --background: #121212;
+  --card-background: #1e1e1e;
+  --header-background: #1a1a1a;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --accent-primary: #8b5cf6;
+  --accent-secondary: #6d28d9;
+  --border-color: #333333;
+  --hover-color: #2a2a2a;
+}
+
+/* Nord Dark Theme */
+.theme-nord-dark {
+  --background: #2e3440;
+  --card-background: #3b4252;
+  --header-background: #2e3440;
+  --text-primary: #eceff4;
+  --text-secondary: #d8dee9;
+  --accent-primary: #88c0d0;
+  --accent-secondary: #5e81ac;
+  --border-color: #4c566a;
+  --hover-color: #434c5e;
+}
+
+/* Solarized Dark Theme */
+.theme-solarized-dark {
+  --background: #002b36;
+  --card-background: #073642;
+  --header-background: #002b36;
+  --text-primary: #839496;
+  --text-secondary: #586e75;
+  --accent-primary: #2aa198;
+  --accent-secondary: #268bd2;
+  --border-color: #073642;
+  --hover-color: #094352;
+}
+
+/* Dracula Theme */
+.theme-dracula {
+  --background: #282a36;
+  --card-background: #44475a;
+  --header-background: #282a36;
+  --text-primary: #f8f8f2;
+  --text-secondary: #6272a4;
+  --accent-primary: #bd93f9;
+  --accent-secondary: #ff79c6;
+  --border-color: #44475a;
+  --hover-color: #3c3f58;
+}
+
+/* Apply theme variables to elements */
+.dark {
+  background-color: var(--background);
+  color: var(--text-primary);
+}
+
+.dark .bg-gray-900 {
+  background-color: var(--card-background);
+}
+
+.dark .bg-gray-800 {
+  background-color: var(--card-background);
+}
+
+.dark .border-gray-700 {
+  border-color: var(--border-color);
+}
+
+.dark .text-gray-200 {
+  color: var(--text-primary);
+}
+
+.dark .text-gray-400 {
+  color: var(--text-secondary);
+}
+
+/* Theme transitions */
+.theme-transition {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Theme Preview Cards */
+.theme-preview-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.theme-preview-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* Theme-specific badge colors */
+.theme-badge-nord {
+  background-color: #88c0d0;
+  color: #2e3440;
+}
+
+.theme-badge-solarized {
+  background-color: #2aa198;
+  color: #002b36;
+}
+
+.theme-badge-dracula {
+  background-color: #bd93f9;
+  color: #282a36;
+}
+
+.theme-badge-dark {
+  background-color: #8b5cf6;
+  color: #121212;
+}

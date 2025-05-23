@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
+import "../styles/themes.css";
+import "../styles/animations.css";
+import "../styles/card-animations.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

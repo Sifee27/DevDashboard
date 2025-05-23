@@ -1,0 +1,197 @@
+/* Card Animations and UI Polish */
+.card {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transform-origin: center bottom;
+  backface-visibility: hidden;
+}
+
+.card-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.card-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 500ms, transform 500ms;
+}
+
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Button hover effect */
+.button-hover {
+  transition: all 0.3s ease;
+}
+
+.button-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* Button press effect */
+.button-press:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 3px rgba(139, 92, 246, 0.2);
+}
+
+/* Sequential animation for cards */
+.staggered-card-1 { animation: slideInUp 0.4s ease-out 0.1s both; }
+.staggered-card-2 { animation: slideInUp 0.4s ease-out 0.2s both; }
+.staggered-card-3 { animation: slideInUp 0.4s ease-out 0.3s both; }
+.staggered-card-4 { animation: slideInUp 0.4s ease-out 0.4s both; }
+
+/* Task item animations */
+.task-item {
+  transition: all 0.2s ease;
+}
+
+.task-item:hover {
+  background-color: rgba(139, 92, 246, 0.05);
+}
+
+.task-item-enter {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.task-item-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.task-item-exit {
+  opacity: 1;
+}
+
+.task-item-exit-active {
+  opacity: 0;
+  transform: translateX(10px);
+  transition: opacity 300ms, transform 300ms;
+}
+
+/* Button animations */
+.button-press {
+  transition: transform 0.1s ease;
+}
+
+.button-press:active {
+  transform: scale(0.96);
+}
+
+.button-hover {
+  transition: all 0.2s ease;
+}
+
+.button-hover:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+/* Glow effect for important elements */
+.glow-on-hover:hover {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Shimmer effect for loading states */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.dark .loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+/* Micro-interactions */
+.badge-ping {
+  position: relative;
+}
+
+.badge-ping::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Page transitions */
+.page-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Section transitions */
+.section-slide-up {
+  animation: slideInUp 0.5s ease-out;
+}
+
+.section-slide-left {
+  animation: slideInLeft 0.5s ease-out;
+}
+
+.section-slide-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+/* Flip animation for cards */
+@keyframes flip {
+  0% { transform: perspective(400px) rotateY(0); }
+  100% { transform: perspective(400px) rotateY(180deg); }
+}
+
+.card-flip {
+  transform-style: preserve-3d;
+  transition: transform 0.6s;
+}
+
+.card-flip:hover {
+  transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+  backface-visibility: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.card-back {
+  transform: rotateY(180deg);
+}
+
+/* Focus states */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.4);
+}
+
+/* Scale effect */
+.scale-on-hover:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
