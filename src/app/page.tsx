@@ -5,8 +5,18 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Code, CheckCircle, PieChart, Clock, Star, ExternalLink } from 'lucide-react';
 
+// Define all possible CSS animation durations before using them
+const ANIMATION_DURATIONS = {
+  slow: '60s',
+  medium: '45s',
+  fast: '30s'
+};
+
 export default function Home() {
-  // Force dark mode for the landing page
+  // Define all state variables at the top of the component
+  const [animateOrbit, setAnimateOrbit] = useState(false);
+  
+  // Force dark mode for the landing page - grouped with other effects
   useEffect(() => {
     document.documentElement.classList.add('dark');
     return () => {
@@ -14,9 +24,7 @@ export default function Home() {
     };
   }, []);
 
-  // Animated elements for orbit effect
-  const [animateOrbit, setAnimateOrbit] = useState(false);
-
+  // Animation effect
   useEffect(() => {
     // Start animation after page load
     const timer = setTimeout(() => setAnimateOrbit(true), 500);
@@ -140,12 +148,12 @@ export default function Home() {
               </div>
 
               {/* Orbit circles */}
-              <div className={`absolute top-1/2 left-1/2 w-40 h-40 border border-gray-700/30 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow' : ''}`} style={{ animationDuration: '30s' }}>
+              <div className={`absolute top-1/2 left-1/2 w-40 h-40 border border-gray-700/30 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow' : ''}`} style={{ animationDuration: ANIMATION_DURATIONS.fast }}>
                 <div className="absolute -left-3 -top-3 w-6 h-6 rounded-full bg-green-900/80 border border-green-500/50 flex items-center justify-center shadow-lg shadow-green-500/10">
                   <Code className="w-3 h-3 text-green-400" />
                 </div>
               </div>
-              <div className={`absolute top-1/2 left-1/2 w-72 h-72 border border-gray-700/20 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow-reverse' : ''}`} style={{ animationDuration: '45s' }}>
+              <div className={`absolute top-1/2 left-1/2 w-72 h-72 border border-gray-700/20 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow-reverse' : ''}`} style={{ animationDuration: ANIMATION_DURATIONS.medium }}>
                 <div className="absolute -right-3 top-1/4 w-6 h-6 rounded-full bg-blue-900/80 border border-blue-500/50 flex items-center justify-center shadow-lg shadow-blue-500/10">
                   <CheckCircle className="w-3 h-3 text-blue-400" />
                 </div>
@@ -153,7 +161,7 @@ export default function Home() {
                   <PieChart className="w-3 h-3 text-purple-400" />
                 </div>
               </div>
-              <div className={`absolute top-1/2 left-1/2 w-96 h-96 border border-gray-700/10 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow' : ''}`} style={{ animationDuration: '60s' }}>
+              <div className={`absolute top-1/2 left-1/2 w-96 h-96 border border-gray-700/10 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow' : ''}`} style={{ animationDuration: ANIMATION_DURATIONS.slow }}>
                 <div className="absolute -left-3 bottom-1/3 w-6 h-6 rounded-full bg-orange-900/80 border border-orange-500/50 flex items-center justify-center shadow-lg shadow-orange-500/10">
                   <Clock className="w-3 h-3 text-orange-400" />
                 </div>
@@ -182,7 +190,7 @@ export default function Home() {
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold mb-2 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Key Features</h2>
             <p className="text-gray-400 max-w-lg mx-auto text-sm">
-              Everything you need in one clean interface.
+              Everything you need in one clean, intuitive interface.
             </p>
           </div>
 
