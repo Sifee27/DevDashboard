@@ -1,0 +1,126 @@
+/* Visual Settings CSS - Layout density and other visual customizations */
+
+/* Layout Density Settings */
+.layout-compact {
+  --card-padding: 0.75rem;
+  --element-spacing: 0.5rem;
+}
+
+.layout-comfortable {
+  --card-padding: 1.25rem;
+  --element-spacing: 1rem;
+}
+
+.layout-spacious {
+  --card-padding: 1.75rem;
+  --element-spacing: 1.5rem;
+}
+
+/* Apply layout density to components */
+.layout-compact .card,
+.layout-compact .bg-white,
+.layout-compact .bg-gray-900 {
+  padding: var(--card-padding) !important;
+}
+
+.layout-compact .space-y-3 {
+  margin-top: var(--element-spacing) !important;
+}
+
+.layout-spacious .card,
+.layout-spacious .bg-white,
+.layout-spacious .bg-gray-900 {
+  padding: var(--card-padding) !important;
+}
+
+.layout-spacious .grid {
+  gap: calc(var(--element-spacing) * 1.2) !important;
+}
+
+/* High Contrast Mode */
+.high-contrast {
+  --contrast-border: 2px solid;
+}
+
+.high-contrast .border {
+  border-width: var(--contrast-border);
+}
+
+.high-contrast .text-gray-400,
+.high-contrast .text-gray-500 {
+  color: rgb(209 213 219); /* text-gray-300 */
+}
+
+.high-contrast .dark .text-gray-400,
+.high-contrast .dark .text-gray-500 {
+  color: rgb(156 163 175); /* text-gray-400 */
+}
+
+/* Theme Color Variables */
+:root {
+  --theme-primary: #8b5cf6;   /* Default: violet */
+  --theme-secondary: #6d28d9;
+}
+
+/* Apply theme colors to elements */
+.text-blue-500,
+.text-violet-500,
+.text-violet-600,
+.text-violet-700,
+.text-primary,
+.text-theme-primary {
+  color: var(--theme-primary) !important;
+}
+
+.bg-blue-500,
+.bg-violet-500,
+.bg-violet-600,
+.theme-button,
+.bg-theme-primary {
+  background-color: var(--theme-primary) !important;
+}
+
+.hover\:bg-blue-600:hover,
+.hover\:bg-violet-600:hover,
+.hover\:bg-violet-700:hover,
+.theme-button:hover {
+  background-color: var(--theme-secondary) !important;
+}
+
+.border-blue-500,
+.border-violet-500,
+.border-theme-primary {
+  border-color: var(--theme-primary) !important;
+}
+
+.focus\:ring-blue-500:focus,
+.focus\:ring-violet-500:focus {
+  --tw-ring-color: var(--theme-primary) !important;
+}
+
+.focus\:border-blue-500:focus,
+.focus\:border-violet-500:focus {
+  border-color: var(--theme-primary) !important;
+}
+
+/* Dashboard cards with theme colors */
+.dashboard-card {
+  border-color: transparent;
+  transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+  border-color: var(--theme-primary);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+/* High contrast buttons */
+.high-contrast button {
+  border-width: 2px;
+}
+
+.high-contrast .theme-button {
+  box-shadow: 0 0 0 1px white;
+}
+
+/* Animation speed control is handled in JavaScript */

@@ -295,15 +295,65 @@ export default function Dashboard() {
   // Show confetti state
   const [showConfetti, setShowConfetti] = useState(false);
 
+  // Helper function to get color theme CSS variables
+  const getThemeColor = () => {
+    switch(visualSettings.colorTheme) {
+      case 'violet': return { primary: '#8b5cf6', secondary: '#6d28d9' };
+      case 'blue': return { primary: '#3b82f6', secondary: '#2563eb' };
+      case 'green': return { primary: '#10b981', secondary: '#059669' };
+      case 'amber': return { primary: '#f59e0b', secondary: '#d97706' };
+      default: return { primary: '#8b5cf6', secondary: '#6d28d9' };
+    }
+  };
+
+  // Get animation speed value in seconds
+  const getAnimationSpeed = () => {
+    switch(visualSettings.animationSpeed) {
+      case 'slow': return 0.1;
+      case 'normal': return 0.2;
+      case 'fast': return 0.4;
+      default: return 0.2;
+    }
+  };
+
+  // Get layout spacing class based on density setting
+  const getLayoutClasses = () => {
+    const baseClasses = "flex flex-col min-h-screen bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-200 relative";
+    
+    // Add high contrast if enabled
+    const contrastClass = visualSettings.contrastMode === 'high' ? 'high-contrast' : '';
+    
+    // Add layout density classes
+    let densityClass = '';
+    switch(visualSettings.layoutDensity) {
+      case 'compact': densityClass = 'layout-compact'; break;
+      case 'comfortable': densityClass = 'layout-comfortable'; break;
+      case 'spacious': densityClass = 'layout-spacious'; break;
+      default: densityClass = 'layout-comfortable';
+    }
+    
+    return `${baseClasses} ${densityClass} ${contrastClass}`;
+  };
+  
+  // Get the current theme colors
+  const themeColors = getThemeColor();
+  
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-200 relative" style={{ fontFamily: 'var(--font-space-grotesk)' }}>
+    <div 
+      className={getLayoutClasses()}
+      style={{ 
+        fontFamily: 'var(--font-space-grotesk)',
+        '--theme-primary': themeColors.primary,
+        '--theme-secondary': themeColors.secondary,
+      } as React.CSSProperties}
+    >
       {/* Animated Background */}
       {visualSettings.enableAnimations && visualSettings.backgroundStyle !== 'none' && (
         <AnimatedBackground
           variant={visualSettings.backgroundStyle}
-          opacity={0.04}
-          speed={0.2}
-          color={darkMode ? '#8b5cf6' : '#6d28d9'}
+          opacity={visualSettings.contrastMode === 'high' ? 0.06 : 0.04}
+          speed={getAnimationSpeed()}
+          color={darkMode ? themeColors.primary : themeColors.secondary}
         />
       )}
 
@@ -320,8 +370,11 @@ export default function Dashboard() {
                 <Github className="h-5 w-5 text-white" />
               </div>
               <h1
-                className="px-4 py-2 bg-violet-600 text-white rounded-md text-sm hover:bg-violet-700 transition-all duration-300 transform hover:scale-105 hover:shadow-md button-press glow-on-hover"
-                style={{ fontFamily: 'var(--font-jetbrains-mono)' }}
+                className="px-4 py-2 text-white rounded-md text-sm transition-all duration-300 transform hover:scale-105 hover:shadow-md button-press glow-on-hover theme-button"
+                style={{ 
+                  fontFamily: 'var(--font-jetbrains-mono)',
+                  backgroundColor: 'var(--theme-primary)'
+                }}
               >DevDashboard</h1>
             </Link>
           </div>
@@ -359,7 +412,7 @@ export default function Dashboard() {
       <div className="container mx-auto px-4 pt-6 pb-2">
         <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 mb-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Dashboard Settings</h2>
+            <h2 className="text-base font-semibold text-theme-primary font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Dashboard Settings</h2>
             <VisualSettings
               onChangeAction={setVisualSettings}
               className="transition-all duration-200"
@@ -371,7 +424,7 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Top Row: GitHub Activity + Today's Goals */}
-          <div className="col-span-1 lg:col-span-3 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-700 card-hover staggered-card-1 card">
+          <div className="col-span-1 lg:col-span-3 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg card-hover staggered-card-1 card dashboard-card">
             <div className="flex justify-between items-center mb-5">
               <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Recent Activity</h2>
               <span className="text-xs text-gray-600 dark:text-gray-400 px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">Last 12 weeks</span>
@@ -432,7 +485,7 @@ export default function Dashboard() {
           </div>
 
           {/* Today&apos;s Goals - Now in the top row, right side */}
-          <div className="col-span-1 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-700 card-hover staggered-card-2 card">
+          <div className="col-span-1 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg card-hover staggered-card-2 card dashboard-card">
             <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Today&apos;s Goals</h2>
 
             <form onSubmit={addTask} className="mb-4">
@@ -445,8 +498,8 @@ export default function Dashboard() {
                   className="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-xs text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
                 <button
-                  type="submit"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors button-hover"
+                  type="submit" 
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-theme-primary transition-colors button-hover"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
                     <path fillRule="evenodd" d="M7.75 2a.75.75 0 01.75.75V7h4.25a.75.75 0 110 1.5H8.5v4.25a.75.75 0 11-1.5 0V8.5H2.75a.75.75 0 010-1.5H7V2.75A.75.75 0 017.75 2z" />
@@ -488,9 +541,9 @@ export default function Dashboard() {
 
             {checklist.some(item => item.completed) && (
               <div className="text-right">
-                <button
+                <button 
                   onClick={clearCompleted}
-                  className="text-xs text-blue-500 hover:text-blue-400 transition-colors button-hover button-press"
+                  className="text-xs text-theme-primary hover:opacity-80 transition-colors button-hover button-press"
                 >
                   Clear completed
                 </button>
@@ -499,7 +552,7 @@ export default function Dashboard() {
           </div>
 
           {/* Bottom Row: Open Pull Requests and Top Repositories */}
-          <div className="col-span-1 lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
+          <div className="col-span-1 lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800 dashboard-card">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Pull Requests</h2>
               <div className="flex gap-2">
@@ -546,27 +599,27 @@ export default function Dashboard() {
           </div>
 
           {/* Top Repositories */}
-          <div className="col-span-1 lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
+          <div className="col-span-1 lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800 dashboard-card">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Top Repositories</h2>
               <div className="flex gap-2">
-                <button
-                  onClick={() => setRepoFilter('stars')}
+                <button 
+                  onClick={() => setRepoFilter('stars')} 
                   className={cn(
                     "text-xs px-2 py-1 rounded-md transition-colors",
                     repoFilter === 'stars'
-                      ? "bg-blue-500 text-white"
+                      ? "bg-theme-primary text-white" 
                       : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
                   )}
                 >
                   Most Starred
                 </button>
-                <button
-                  onClick={() => setRepoFilter('activity')}
+                <button 
+                  onClick={() => setRepoFilter('activity')} 
                   className={cn(
                     "text-xs px-2 py-1 rounded-md transition-colors",
                     repoFilter === 'activity'
-                      ? "bg-blue-500 text-white"
+                      ? "bg-theme-primary text-white" 
                       : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
                   )}
                 >

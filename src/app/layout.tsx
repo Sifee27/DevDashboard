@@ -5,6 +5,7 @@ import "./globals.css";
 import "../styles/themes.css";
 import "../styles/animations.css";
 import "../styles/card-animations.css";
+import "../styles/visual-settings.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
