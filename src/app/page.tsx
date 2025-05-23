@@ -1,36 +1,55 @@
 "use client";
 
+// All imports grouped at the top
 import { useEffect, useState } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
-import { Code, CheckCircle, PieChart, Clock, Star, ExternalLink } from 'lucide-react';
 
-// Define all possible CSS animation durations before using them
+// Separate icon imports to avoid bundling issues
+import { Code } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
+import { PieChart } from 'lucide-react';
+import { Clock } from 'lucide-react';
+import { Star } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
+
+// Constants defined outside component to avoid TDZ issues
 const ANIMATION_DURATIONS = {
   slow: '60s',
   medium: '45s',
   fast: '30s'
 };
 
+/**
+ * Home component for the landing page
+ */
 export default function Home() {
-  // Define all state variables at the top of the component
+  // All state declarations grouped at the top
   const [animateOrbit, setAnimateOrbit] = useState(false);
   
-  // Force dark mode for the landing page - grouped with other effects
+  // Effect for dark mode
   useEffect(() => {
-    document.documentElement.classList.add('dark');
-    return () => {
-      document.documentElement.classList.remove('dark');
-    };
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.add('dark');
+      return () => {
+        document.documentElement.classList.remove('dark');
+      };
+    }
+    return undefined;
   }, []);
 
-  // Animation effect
+  // Effect for animation timing
   useEffect(() => {
-    // Start animation after page load
-    const timer = setTimeout(() => setAnimateOrbit(true), 500);
-    return () => clearTimeout(timer);
+    if (typeof window !== 'undefined') {
+      const timer = setTimeout(() => setAnimateOrbit(true), 500);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
   }, []);
 
+  // Define headerFontStyle before using it in JSX
+  const headerFontStyle = { fontFamily: 'var(--font-jetbrains-mono)' };
+  
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-950 via-violet-950/30 to-gray-950 text-white overflow-hidden">
       {/* Header/Navigation */}
@@ -38,17 +57,19 @@ export default function Home() {
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center space-x-2 pl-2">
             <div className="h-7 w-7 rounded-full overflow-hidden flex items-center justify-center transform hover:scale-110 transition-all duration-300">
-              <Image src="/Group 2.svg" alt="DevDashboard Logo" width={28} height={28} className="h-full w-full" />
+              {typeof Image === 'function' && (
+                <Image src="/Group 2.svg" alt="DevDashboard Logo" width={28} height={28} className="h-full w-full" />
+              )}
             </div>
-            <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-blue-500 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>DevDashboard</h1>
+            <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-blue-500 font-mono" style={headerFontStyle}>DevDashboard</h1>
           </div>
           <nav className="hidden md:flex items-center justify-center space-x-6 text-xs font-medium flex-1 mx-6">
             <Link href="#features" className="text-gray-300 hover:text-white transition-colors">Features</Link>
             <Link href="#why" className="text-gray-300 hover:text-white transition-colors">Why DevDashboard</Link>
           </nav>
           <div className="flex space-x-3">
-            <Link href="/dashboard" className="px-3 py-1.5 rounded-md bg-gray-800/80 text-gray-300 border border-gray-700/30 hover:bg-gray-700/80 transition-all duration-300 text-xs font-medium">
-              Try Demo
+            <Link href="/dashboard" className="px-4 py-1.5 rounded-full bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors flex items-center space-x-1.5">
+              Dashboard
             </Link>
             <button className="px-3 py-1.5 rounded-md bg-violet-600/20 text-violet-400 border border-violet-600/30 hover:bg-violet-600/30 transition-all duration-300 text-xs font-medium font-mono button-hover" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
               Sign In
@@ -148,12 +169,12 @@ export default function Home() {
               </div>
 
               {/* Orbit circles */}
-              <div className={`absolute top-1/2 left-1/2 w-40 h-40 border border-gray-700/30 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow' : ''}`} style={{ animationDuration: ANIMATION_DURATIONS.fast }}>
+              <div className={`absolute top-1/2 left-1/2 w-40 h-40 border border-gray-700/30 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow' : ''}`} style={{ animationDuration: ANIMATION_DURATIONS ? ANIMATION_DURATIONS.fast : '30s' }}>
                 <div className="absolute -left-3 -top-3 w-6 h-6 rounded-full bg-green-900/80 border border-green-500/50 flex items-center justify-center shadow-lg shadow-green-500/10">
                   <Code className="w-3 h-3 text-green-400" />
                 </div>
               </div>
-              <div className={`absolute top-1/2 left-1/2 w-72 h-72 border border-gray-700/20 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow-reverse' : ''}`} style={{ animationDuration: ANIMATION_DURATIONS.medium }}>
+              <div className={`absolute top-1/2 left-1/2 w-72 h-72 border border-gray-700/20 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow-reverse' : ''}`} style={{ animationDuration: ANIMATION_DURATIONS ? ANIMATION_DURATIONS.medium : '45s' }}>
                 <div className="absolute -right-3 top-1/4 w-6 h-6 rounded-full bg-blue-900/80 border border-blue-500/50 flex items-center justify-center shadow-lg shadow-blue-500/10">
                   <CheckCircle className="w-3 h-3 text-blue-400" />
                 </div>
@@ -161,7 +182,7 @@ export default function Home() {
                   <PieChart className="w-3 h-3 text-purple-400" />
                 </div>
               </div>
-              <div className={`absolute top-1/2 left-1/2 w-96 h-96 border border-gray-700/10 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow' : ''}`} style={{ animationDuration: ANIMATION_DURATIONS.slow }}>
+              <div className={`absolute top-1/2 left-1/2 w-96 h-96 border border-gray-700/10 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow' : ''}`} style={{ animationDuration: ANIMATION_DURATIONS ? ANIMATION_DURATIONS.slow : '60s' }}>
                 <div className="absolute -left-3 bottom-1/3 w-6 h-6 rounded-full bg-orange-900/80 border border-orange-500/50 flex items-center justify-center shadow-lg shadow-orange-500/10">
                   <Clock className="w-3 h-3 text-orange-400" />
                 </div>
