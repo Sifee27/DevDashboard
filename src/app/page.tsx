@@ -16,7 +16,7 @@ export default function Home() {
 
   // Animated elements for orbit effect
   const [animateOrbit, setAnimateOrbit] = useState(false);
-  
+
   useEffect(() => {
     // Start animation after page load
     const timer = setTimeout(() => setAnimateOrbit(true), 500);
@@ -49,12 +49,12 @@ export default function Home() {
           </div>
         </div>
       </header>
-      
+
       {/* Hero Section */}
       <section className="relative py-12 md:py-20 overflow-hidden">
         {/* Background effects */}
         <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%238B5CF6\' fill-opacity=\'0.4\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'1\'/%3E%3C/g%3E%3C/svg%3E")' }}></div>
-        
+
         {/* Animated blobs */}
         <div className="absolute top-20 -left-32 w-96 h-96 bg-violet-600/20 rounded-full filter blur-3xl opacity-20 animate-pulse"></div>
         <div className="absolute bottom-20 -right-32 w-96 h-96 bg-blue-500/20 rounded-full filter blur-3xl opacity-20 animate-pulse"></div>
@@ -68,27 +68,27 @@ export default function Home() {
               <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-violet-500 animate-pulse"></span>
               Dev Metrics + Productivity in One Platform
             </div>
-            
+
             {/* Heading */}
             <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight font-mono animate-slide-up" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
-              Unlock Your 
+              Unlock Your
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-500 via-purple-500 to-blue-500 px-2">Developer</span>
               Potential
             </h1>
-            
+
             <p className="text-lg text-gray-200 max-w-2xl mx-auto mb-4 leading-relaxed animate-slide-up animate-delay-100">
               The all-in-one dashboard that brings together your GitHub activity, productivity metrics, and daily goals in one beautifully designed interface.
             </p>
-            
+
             <p className="text-sm text-gray-400 max-w-lg mx-auto mb-8 animate-slide-up animate-delay-200">
               Connect your GitHub account, track your progress, and boost your productivity with our intuitive developer dashboard.
             </p>
-          
+
             {/* Stats */}
             <div className="flex flex-wrap items-center justify-center gap-8 mb-10 animate-fade-in animate-delay-300">
               <div className="text-center">
-                <div className="text-3xl font-bold text-violet-400 mb-1">5o%+</div>
-                <div className="text-xs text-gray-400">Time </div>
+                <div className="text-3xl font-bold text-violet-400 mb-1">100%</div>
+                <div className="text-xs text-gray-400">Privacy Focused</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-400 mb-1">1M+</div>
@@ -99,7 +99,7 @@ export default function Home() {
                 <div className="text-xs text-gray-400">Uptime</div>
               </div>
             </div>
-            
+
             {/* Feature badges */}
             <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-gray-300 mb-8 animate-slide-up animate-delay-300">
               <div className="flex items-center px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors duration-300 cursor-pointer">
@@ -115,12 +115,12 @@ export default function Home() {
                 <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mr-1.5"></div> Free to Use
               </div>
             </div>
-            
+
             {/* CTA Section */}
             <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-12 relative z-10 animate-slide-up animate-delay-400">
-              <input 
-                type="email" 
-                placeholder="Enter your email" 
+              <input
+                type="email"
+                placeholder="Enter your email"
                 className="w-full p-3 bg-gray-900/80 border border-gray-700 rounded-lg backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-300 placeholder-gray-500 text-sm"
               />
               <button className="px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-medium rounded-lg transition-all duration-300 shadow-lg shadow-purple-900/30 text-sm font-mono button-hover button-press" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
@@ -166,8 +166,8 @@ export default function Home() {
 
             {/* Demo button */}
             <div className="animate-fade-in animate-delay-500">
-              <Link href="/dashboard" 
-                className="px-6 py-3 bg-gray-800/80 hover:bg-gray-700/80 text-white font-medium rounded-lg transition-all duration-300 border border-gray-700 flex items-center justify-center gap-2 text-sm font-mono mx-auto button-hover button-press" 
+              <Link href="/dashboard"
+                className="px-6 py-3 bg-gray-800/80 hover:bg-gray-700/80 text-white font-medium rounded-lg transition-all duration-300 border border-gray-700 flex items-center justify-center gap-2 text-sm font-mono mx-auto button-hover button-press"
                 style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
                 <span>View Live Demo</span>
                 <ExternalLink className="h-3.5 w-3.5" />
@@ -186,7 +186,7 @@ export default function Home() {
               Everything you need in one clean interface.
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {/* Feature 1 */}
             <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800 rounded-lg p-5 hover:bg-gray-900/80 transition-all duration-200">
@@ -198,7 +198,7 @@ export default function Home() {
               <h3 className="text-base font-bold mb-1.5 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>GitHub Activity</h3>
               <p className="text-gray-400 text-sm">Track commits, PRs, and issues across all your repos in one view.</p>
             </div>
-            
+
             {/* Feature 2 */}
             <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800 rounded-lg p-5 hover:bg-gray-900/80 transition-all duration-200">
               <div className="w-10 h-10 bg-violet-500/10 rounded-md flex items-center justify-center mb-3">
@@ -209,7 +209,7 @@ export default function Home() {
               <h3 className="text-base font-bold mb-1.5 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Daily Goals</h3>
               <p className="text-gray-400 text-sm">Track development goals with a distraction-free interface.</p>
             </div>
-            
+
             {/* Feature 3 */}
             <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800 rounded-lg p-5 hover:bg-gray-900/80 transition-all duration-200">
               <div className="w-10 h-10 bg-blue-500/10 rounded-md flex items-center justify-center mb-3">
@@ -248,7 +248,7 @@ export default function Home() {
       </section>
 
 
-      
+
       {/* CTA Section */}
       <section className="py-12">
         <div className="container mx-auto px-4">
