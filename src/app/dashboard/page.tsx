@@ -44,7 +44,7 @@ type ChecklistItem = {
 export default function Dashboard() {
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Repository filter state
   const [repoFilter, setRepoFilter] = useState<'stars' | 'activity'>('stars');
 
@@ -63,7 +63,7 @@ export default function Dashboard() {
     // Default to dark mode if not in browser
     return true;
   });
-  
+
   // Apply theme class based on state
   const applyTheme = (isDark: boolean) => {
     // Update document class for global theme styling
@@ -73,27 +73,27 @@ export default function Dashboard() {
       document.documentElement.classList.remove('dark');
     }
   };
-  
+
   // Apply the theme when component mounts
   React.useEffect(() => {
     applyTheme(darkMode);
   }, [darkMode]);
-  
+
   // Simulate loading for demo purposes
   React.useEffect(() => {
     // Show loading state initially
     setIsLoading(true);
-    
+
     // Simulate API/data loading delay
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1500);
-    
+
     return () => clearTimeout(timer);
   }, []);
-  
+
   // We'll define filteredRepositories after repositories is initialized
-  
+
   // Setup dnd sensors for drag and drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -105,15 +105,15 @@ export default function Dashboard() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-  
+
   // Input state for new tasks
   const [newTask, setNewTask] = useState('');
-  
+
   // Generate sample commit activity data for the heatmap
   const generateCommitActivity = (): CommitActivity => {
     const activity: CommitActivity = [];
     const now = new Date();
-    
+
     // Generate data for the last 12 weeks (84 days)
     for (let i = 83; i >= 0; i--) {
       const date = new Date();
@@ -127,13 +127,13 @@ export default function Dashboard() {
         count: Math.floor(Math.random() * maxCommits) // 0-7 commits on weekdays, 0-3 on weekends
       });
     }
-    
+
     return activity;
   };
-  
+
   // Sample data
   const commitActivity = generateCommitActivity();
-  
+
   // Sample pull requests
   const [pullRequests] = useState<PullRequest[]>([
     { id: '1', title: 'Fix authentication bug', repository: 'auth-service', status: 'open', url: '#' },
@@ -142,7 +142,7 @@ export default function Dashboard() {
     { id: '4', title: 'Update documentation', repository: 'docs', status: 'open', url: '#' },
     { id: '5', title: 'Optimize database queries', repository: 'backend', status: 'open', url: '#' },
   ]);
-  
+
   // Sample repositories
   const [repositories] = useState<Repository[]>([
     { name: 'frontend-app', stars: 24, lastCommitDate: '2025-05-20', description: 'Main frontend application' },
@@ -152,7 +152,7 @@ export default function Dashboard() {
     { name: 'docs-site', stars: 8, lastCommitDate: '2025-05-22', description: 'Documentation website' },
     { name: 'backend', stars: 32, lastCommitDate: '2025-05-19', description: 'Backend services and API endpoints' },
   ]);
-  
+
   // Filter repositories based on selected filter
   const filteredRepositories = useMemo(() => {
     return [...repositories].sort((a, b) => {
@@ -165,7 +165,7 @@ export default function Dashboard() {
       }
     });
   }, [repositories, repoFilter]);
-  
+
   // Load checklist from localStorage or use default items
   const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
     if (typeof window !== 'undefined') {
@@ -186,31 +186,31 @@ export default function Dashboard() {
       { id: '5', text: 'Deploy to production', completed: false },
     ];
   });
-  
+
   // Save checklist to localStorage when it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('devdashboard-checklist', JSON.stringify(checklist));
     }
   }, [checklist]);
-  
+
   // Handle task reordering (drag and drop)
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (over && active.id !== over.id) {
       setChecklist((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
-        
+
         // Notify user of the change
         toast.success(`Task reordered`);
-        
+
         return arrayMove(items, oldIndex, newIndex);
       });
     }
   };
-  
+
   // Toggle checklist item completion
   const toggleChecklistItem = (id: string) => {
     setChecklist(checklist.map(item => {
@@ -221,7 +221,7 @@ export default function Dashboard() {
       }
       return item;
     }));
-    
+
     // Check if all tasks are completed to trigger confetti
     const updatedList = checklist.map(item => {
       if (item.id === id) {
@@ -229,10 +229,10 @@ export default function Dashboard() {
       }
       return item;
     });
-    
-    if (visualSettings.enableMicrointeractions && 
-        updatedList.length > 0 && 
-        updatedList.every(item => item.completed)) {
+
+    if (visualSettings.enableMicrointeractions &&
+      updatedList.length > 0 &&
+      updatedList.every(item => item.completed)) {
       setShowConfetti(true);
       toast.success('All tasks completed! 🎉', {
         style: { background: '#7c3aed', color: 'white' },
@@ -240,7 +240,7 @@ export default function Dashboard() {
       });
     }
   };
-  
+
   // Add new task
   const addTask = (e: FormEvent) => {
     e.preventDefault();
@@ -252,57 +252,57 @@ export default function Dashboard() {
       toast.success('New task added');
     }
   };
-  
+
   // Delete a task
   const deleteTask = (id: string) => {
     setChecklist(checklist.filter(item => item.id !== id));
     toast('Task removed', { icon: '🗑️' });
   };
-  
+
   // Clear completed tasks
   const clearCompleted = () => {
     const completedCount = checklist.filter(item => item.completed).length;
     setChecklist(checklist.filter(item => !item.completed));
     toast(`Cleared ${completedCount} completed ${completedCount === 1 ? 'task' : 'tasks'}`);
   };
-  
+
   // Get status color for PR
   const getStatusColor = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'open': return 'bg-green-500 dark:bg-green-600 text-white';
       case 'merged': return 'bg-purple-500 dark:bg-purple-600 text-white';
       case 'draft': return 'bg-gray-500 dark:bg-gray-600 text-white';
       default: return 'bg-gray-500 dark:bg-gray-600 text-white';
     }
   };
-  
+
   // Reset confetti after it plays
   const handleConfettiComplete = () => {
     setTimeout(() => setShowConfetti(false), 1500);
   };
-  
+
   // Visual settings state
   const [visualSettings, setVisualSettings] = useState<VisualSettingsState>({
     enableAnimations: true,
     backgroundStyle: 'code',
     enableMicrointeractions: true,
   });
-  
+
   // Show confetti state
   const [showConfetti, setShowConfetti] = useState(false);
-  
+
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-200 relative" style={{ fontFamily: 'var(--font-space-grotesk)' }}>
       {/* Animated Background */}
       {visualSettings.enableAnimations && visualSettings.backgroundStyle !== 'none' && (
-        <AnimatedBackground 
-          variant={visualSettings.backgroundStyle} 
-          opacity={0.04} 
-          speed={0.2} 
-          color={darkMode ? '#8b5cf6' : '#6d28d9'} 
+        <AnimatedBackground
+          variant={visualSettings.backgroundStyle}
+          opacity={0.04}
+          speed={0.2}
+          color={darkMode ? '#8b5cf6' : '#6d28d9'}
         />
       )}
-      
+
       {/* Confetti Effect */}
       {visualSettings.enableMicrointeractions && (
         <ConfettiEffect trigger={showConfetti} onComplete={handleConfettiComplete} />
@@ -315,21 +315,21 @@ export default function Dashboard() {
               <div className="h-8 w-8 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center">
                 <Github className="h-5 w-5 text-white" />
               </div>
-              <h1 
+              <h1
                 className="px-4 py-2 bg-violet-600 text-white rounded-md text-sm hover:bg-violet-700 transition-all duration-300 transform hover:scale-105 hover:shadow-md button-press glow-on-hover"
                 style={{ fontFamily: 'var(--font-jetbrains-mono)' }}
               >DevDashboard</h1>
             </Link>
           </div>
-          
+
           <div className="flex items-center space-x-3">
-            <button 
+            <button
               className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 transform hover:scale-105"
               aria-label="Refresh dashboard"
             >
               <RefreshCcw className="h-4 w-4 text-gray-700 dark:text-gray-300" />
             </button>
-            <button 
+            <button
               className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 transform hover:scale-105"
               onClick={() => {
                 setDarkMode(!darkMode);
@@ -343,8 +343,8 @@ export default function Dashboard() {
                 <Moon className="h-4 w-4 text-gray-700 dark:text-gray-300" />
               )}
             </button>
-            <VisualSettings 
-              onChangeAction={setVisualSettings} 
+            <VisualSettings
+              onChangeAction={setVisualSettings}
               className="transition-all duration-200 transform hover:scale-105"
             />
           </div>
@@ -353,7 +353,7 @@ export default function Dashboard() {
           </div>
         </div>
       </header>
-      
+
       <main className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Top Row: GitHub Activity + Today's Goals */}
@@ -362,7 +362,7 @@ export default function Dashboard() {
               <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Recent Activity</h2>
               <span className="text-xs text-gray-600 dark:text-gray-400 px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">Last 12 weeks</span>
             </div>
-            
+
             {/* Contribution heatmap - GitHub style */}
             <div className="pb-2">
               <div className="flex">
@@ -372,13 +372,13 @@ export default function Dashboard() {
                   <span>Jun</span>
                   <span>Jul</span>
                 </div>
-                
+
                 {/* Contribution grid */}
                 <div className="flex-1">
                   <div className="grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gridTemplateRows: 'repeat(7, 1fr)', gap: '2px' }}>
                     {Array.from({ length: 84 }).map((_, index) => {
                       const day = commitActivity[index] || { count: 0 };
-                      
+
                       // Map activity level to color - Theme responsive
                       let bgColorClass = 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'; // Default (no activity)
                       if (day.count > 0) {
@@ -387,14 +387,14 @@ export default function Dashboard() {
                         else if (day.count < 5) bgColorClass = 'bg-green-300 dark:bg-green-700';
                         else bgColorClass = 'bg-green-400 dark:bg-green-600';
                       }
-                      
+
                       // Check if it's today's commit dot
                       const isToday = day.date === new Date().toISOString().split('T')[0];
                       const pulseEffect = isToday && visualSettings.enableMicrointeractions ? 'animate-pulse shadow-lg shadow-green-500/30 ring-2 ring-green-400 dark:ring-green-600 z-10' : '';
-                      
+
                       return (
-                        <div 
-                          key={`cell-${index}`} 
+                        <div
+                          key={`cell-${index}`}
                           className={`aspect-square rounded-sm ${bgColorClass} hover:ring-1 hover:ring-blue-500 transition-all ${pulseEffect}`}
                           title={`${day.date}: ${day.count} commits${isToday ? ' (Today)' : ''}`}
                         />
@@ -403,7 +403,7 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Legend */}
               <div className="flex justify-end items-center mt-3 text-xs text-gray-500 dark:text-gray-400">
                 <span className="mr-2">Less</span>
@@ -416,11 +416,11 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          
+
           {/* Today&apos;s Goals - Now in the top row, right side */}
           <div className="col-span-1 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-700 card-hover staggered-card-2 card">
             <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Today&apos;s Goals</h2>
-            
+
             <form onSubmit={addTask} className="mb-4">
               <div className="relative">
                 <input
@@ -430,8 +430,8 @@ export default function Dashboard() {
                   placeholder="Add a new task..."
                   className="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-xs text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors button-hover"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
@@ -440,7 +440,7 @@ export default function Dashboard() {
                 </button>
               </div>
             </form>
-            
+
             {isLoading ? (
               <div className="space-y-3 max-h-[230px] mb-3">
                 <Skeleton className="h-6 w-full" />
@@ -449,7 +449,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="max-h-[230px] overflow-y-auto mb-3">
-                <DndContext 
+                <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
                   onDragEnd={handleDragEnd}
@@ -457,7 +457,7 @@ export default function Dashboard() {
                   <SortableContext items={checklist.map(item => item.id)} strategy={verticalListSortingStrategy}>
                     <div className="space-y-1">
                       {checklist.map(item => (
-                        <TaskItem 
+                        <TaskItem
                           key={item.id}
                           id={item.id}
                           text={item.text}
@@ -471,10 +471,10 @@ export default function Dashboard() {
                 </DndContext>
               </div>
             )}
-            
+
             {checklist.some(item => item.completed) && (
               <div className="text-right">
-                <button 
+                <button
                   onClick={clearCompleted}
                   className="text-xs text-blue-500 hover:text-blue-400 transition-colors button-hover button-press"
                 >
@@ -483,7 +483,7 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          
+
           {/* Bottom Row: Open Pull Requests and Top Repositories */}
           <div className="col-span-1 lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
             <div className="flex justify-between items-center mb-4">
@@ -493,7 +493,7 @@ export default function Dashboard() {
                 <button className="text-xs px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 button-hover button-press">Open</button>
               </div>
             </div>
-            
+
             {isLoading ? (
               <div className="space-y-3 pr-1">
                 <Skeleton className="h-16 w-full rounded-md" />
@@ -506,12 +506,12 @@ export default function Dashboard() {
                   <div key={pr.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-md transition-all duration-200 transform hover:scale-[1.01] hover:translate-x-1 task-item">
                     <div className="flex justify-between items-start">
                       <div className="flex items-start gap-2">
-                        <PRStatusIcon 
-                          status={pr.status} 
-                          className={pr.status === 'open' ? 'text-green-500' : 
-                                    pr.status === 'merged' ? 'text-purple-500' : 
-                                    'text-gray-400'} 
-                          size={14} 
+                        <PRStatusIcon
+                          status={pr.status}
+                          className={pr.status === 'open' ? 'text-green-500' :
+                            pr.status === 'merged' ? 'text-purple-500' :
+                              'text-gray-400'}
+                          size={14}
                         />
                         <h3 className="text-xs font-medium text-blue-500 truncate mb-1 flex-1">{pr.title}</h3>
                       </div>
@@ -530,29 +530,29 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          
+
           {/* Top Repositories */}
           <div className="col-span-1 lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Top Repositories</h2>
               <div className="flex gap-2">
-                <button 
-                  onClick={() => setRepoFilter('stars')} 
+                <button
+                  onClick={() => setRepoFilter('stars')}
                   className={cn(
                     "text-xs px-2 py-1 rounded-md transition-colors",
-                    repoFilter === 'stars' 
-                      ? "bg-blue-500 text-white" 
+                    repoFilter === 'stars'
+                      ? "bg-blue-500 text-white"
                       : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
                   )}
                 >
                   Most Starred
                 </button>
-                <button 
-                  onClick={() => setRepoFilter('activity')} 
+                <button
+                  onClick={() => setRepoFilter('activity')}
                   className={cn(
                     "text-xs px-2 py-1 rounded-md transition-colors",
-                    repoFilter === 'activity' 
-                      ? "bg-blue-500 text-white" 
+                    repoFilter === 'activity'
+                      ? "bg-blue-500 text-white"
                       : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
                   )}
                 >
@@ -560,7 +560,7 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
-            
+
             {isLoading ? (
               <div className="space-y-3 pr-1">
                 <Skeleton className="h-16 w-full rounded-md" />
@@ -591,11 +591,11 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
-      
+
       {/* Footer */}
       <footer className="container mx-auto px-4 py-4 text-center text-xs text-[#8B949E] mt-6">
         <p>
-          Built with <span className="text-[#F85149]">❤️</span> by a Developer for Developers | 
+          Built with <span className="text-[#F85149]">❤️</span> by a Developer for Developers |
           <a href="https://github.com/Sifee27/DevDashboard" className="text-[#58A6FF] hover:underline ml-1">GitHub</a>
         </p>
       </footer>
