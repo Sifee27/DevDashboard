@@ -37,7 +37,6 @@ export default function Home() {
           <nav className="hidden md:flex items-center justify-center space-x-6 text-xs font-medium flex-1 mx-6">
             <Link href="#features" className="text-gray-300 hover:text-white transition-colors">Features</Link>
             <Link href="#why" className="text-gray-300 hover:text-white transition-colors">Why DevDashboard</Link>
-            <Link href="#testimonials" className="text-gray-300 hover:text-white transition-colors">Testimonials</Link>
           </nav>
           <div className="flex space-x-3">
             <Link href="/dashboard" className="px-3 py-1.5 rounded-md bg-gray-800/80 text-gray-300 border border-gray-700/30 hover:bg-gray-700/80 transition-all duration-300 text-xs font-medium">
