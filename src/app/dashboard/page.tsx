@@ -324,20 +324,24 @@ export default function Dashboard() {
       // Fallback to initial settings on error
       setVisualSettings(initialVisualSettings);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); 
 
   // Visual settings state
   const [visualSettings, setVisualSettings] = useState<VisualSettingsState>(initialVisualSettings);
 
-  // Visual settings onChange handler
-  const handleVisualSettingsChange = (settings: VisualSettingsState) => {
-    if (!settings) return; // Guard against undefined settings
-    setVisualSettings(settings);
-    // Only access localStorage on client side
+  // Save visual settings to localStorage
+  const saveVisualSettings = (settings: VisualSettingsState) => {
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem('visualSettings', JSON.stringify(settings));
     }
   };
+  
+  // Update visual settings when they change
+  useEffect(() => {
+    saveVisualSettings(visualSettings);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visualSettings]);
 
   // Show confetti state
   const [showConfetti, setShowConfetti] = useState(false);
@@ -380,6 +384,7 @@ export default function Dashboard() {
   };
   
   // Get the current theme colors - Memoize to avoid recalculation
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const themeColors = useMemo(() => getThemeColor(), [visualSettings?.colorTheme]);
   
   return (
