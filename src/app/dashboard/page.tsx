@@ -6,7 +6,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { AnimatedBackground } from '@/components/ui/animated-background';
-import { ConfettiEffect } from '@/components/ui/confetti-effect';
 import { VisualSettings, VisualSettingsState } from '@/components/ui/visual-settings';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -223,7 +222,6 @@ export default function Dashboard() {
       return item;
     }));
 
-    // Check if all tasks are completed to trigger confetti
     const updatedList = checklist.map(item => {
       if (item.id === id) {
         return { ...item, completed: !item.completed };
@@ -234,7 +232,6 @@ export default function Dashboard() {
     if (visualSettings?.enableMicrointeractions &&
       updatedList.length > 0 &&
       updatedList.every(item => item.completed)) {
-      setShowConfetti(true);
       toast.success('All tasks completed! 🎉', {
         style: { background: '#7c3aed', color: 'white' },
         duration: 3000,
@@ -275,11 +272,6 @@ export default function Dashboard() {
       case 'draft': return 'bg-gray-500 dark:bg-gray-600 text-white';
       default: return 'bg-gray-500 dark:bg-gray-600 text-white';
     }
-  };
-
-  // Reset confetti after it plays
-  const handleConfettiComplete = () => {
-    setTimeout(() => setShowConfetti(false), 1500);
   };
 
   // Define theme colors as constants to avoid TDZ issues
@@ -341,9 +333,6 @@ export default function Dashboard() {
   useEffect(() => {
     saveVisualSettings(visualSettings);
   }, [visualSettings, saveVisualSettings]);
-
-  // Show confetti state
-  const [showConfetti, setShowConfetti] = useState(false);
 
   // Helper function to get color theme CSS variables
   const getThemeColor = () => {
@@ -409,13 +398,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Confetti Effect - with safety guards against TDZ */}
-      {visualSettings?.enableMicrointeractions && (
-        <ConfettiEffect 
-          trigger={showConfetti || false} 
-          onComplete={handleConfettiComplete} 
-        />
-      )}
       {/* Header */}
       <header className="border-b border-gray-200 dark:border-gray-800 py-4 px-6 bg-white dark:bg-gray-900 shadow-sm">
         <div className="flex justify-between items-center">
