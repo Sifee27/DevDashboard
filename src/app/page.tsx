@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-// No icons needed after removing the How It Works section
+import Link from 'next/link';
 
 export default function Home() {
   // Force dark mode for the landing page
@@ -26,9 +26,8 @@ export default function Home() {
             <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-blue-500 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>DevDashboard</h1>
           </div>
           <nav className="hidden md:flex items-center justify-center space-x-6 text-xs font-medium flex-1 mx-6">
-            <a href="#features" className="text-gray-300 hover:text-white transition-colors">Features</a>
-            <a href="#why" className="text-gray-300 hover:text-white transition-colors">Why DevDashboard</a>
-            <a href="#how" className="text-gray-300 hover:text-white transition-colors">How It Works</a>
+            <Link href="#features" className="text-gray-300 hover:text-white transition-colors">Features</Link>
+            <Link href="#why" className="text-gray-300 hover:text-white transition-colors">Why DevDashboard</Link>
           </nav>
           <div>
             <button className="px-3 py-1.5 rounded-md bg-violet-600/20 text-violet-400 border border-violet-600/30 hover:bg-violet-600/30 transition-colors text-xs font-medium font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
