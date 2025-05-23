@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 
-// Define element type outside component to avoid TDZ issues
-type Element = {
+/**
+ * Element type definition for animated particles
+ */
+interface AnimatedElement {
   x: number;
   y: number;
   vx: number;
@@ -12,238 +14,241 @@ type Element = {
   size: number;
   opacity: number;
   type: string;
+}
+
+/**
+ * Constants defined outside the component to prevent TDZ issues
+ */
+const ANIMATION_CONSTANTS = {
+  CODE_ELEMENTS: ['{', '}', ';', '()', '[]', '//', '=>', '<>', '&&', '||'],
+  COMMIT_DOT_RADIUS: 4,
+  DEFAULT_COLOR: '#6d28d9',
+  DEFAULT_OPACITY: 0.03,
+  DEFAULT_SPEED: 1,
+  DEFAULT_VARIANT: 'code' as const
 };
 
-// Constants moved outside component to avoid TDZ issues
-const CODE_ELEMENTS = ['{', '}', ';', '()', '[]', '//', '=>', '<>', '&&', '||'];
-const COMMIT_DOT_RADIUS = 4;
-
-type AnimatedBackgroundProps = {
+/**
+ * Props interface for the AnimatedBackground component
+ */
+interface AnimatedBackgroundProps {
   variant?: 'code' | 'dots' | 'checkmarks';
   opacity?: number;
   speed?: number;
   color?: string;
   className?: string;
-};
+}
 
+/**
+ * AnimatedBackground Component
+ * Creates a canvas-based animated background with different visual styles
+ */
 export function AnimatedBackground({
-  variant = 'code',
-  opacity = 0.03,
-  speed = 1,
-  color = '#6d28d9',
+  variant = ANIMATION_CONSTANTS.DEFAULT_VARIANT,
+  opacity = ANIMATION_CONSTANTS.DEFAULT_OPACITY,
+  speed = ANIMATION_CONSTANTS.DEFAULT_SPEED,
+  color = ANIMATION_CONSTANTS.DEFAULT_COLOR,
   className = '',
 }: AnimatedBackgroundProps) {
+  // Refs for canvas element
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  useEffect(() => {
-    // Early return if dependencies aren't ready
-    if (!variant || !opacity || !speed || !color) return;
+  // State to track initialization status
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  
+  /**
+   * Create and manage animation elements based on current canvas dimensions
+   */
+  const createElements = useCallback((canvas: HTMLCanvasElement, count: number, variant: string): AnimatedElement[] => {
+    // Defensive programming: ensure we have a valid count
+    const safeCount = Math.max(20, count);
+    const elements: AnimatedElement[] = [];
     
-    // Store animation frame ID for cleanup
+    // Create elements based on the specified variant
+    for (let i = 0; i < safeCount; i++) {
+      try {
+        // Basic properties for all element types
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const baseSpeed = 0.2 * (speed || ANIMATION_CONSTANTS.DEFAULT_SPEED);
+        const vx = (Math.random() - 0.5) * baseSpeed;
+        const vy = (Math.random() - 0.5) * baseSpeed;
+        
+        // Create elements based on variant
+        if (variant === 'code') {
+          const codeElements = ANIMATION_CONSTANTS.CODE_ELEMENTS;
+          const content = codeElements[Math.floor(Math.random() * codeElements.length)];
+          elements.push({
+            x, y, vx, vy,
+            content,
+            size: Math.floor(Math.random() * 8) + 10, // 10-18px
+            opacity: Math.random() * 0.5 + 0.2, // 0.2-0.7
+            type: 'text'
+          });
+        } else if (variant === 'dots') {
+          elements.push({
+            x, y, vx, vy,
+            size: Math.floor(Math.random() * 2) + ANIMATION_CONSTANTS.COMMIT_DOT_RADIUS - 2, // 2-4px
+            opacity: Math.random() * 0.5 + 0.3, // 0.3-0.8
+            type: 'dot'
+          });
+        } else {
+          elements.push({
+            x, y, vx, vy,
+            size: Math.floor(Math.random() * 8) + 12, // 12-20px
+            opacity: Math.random() * 0.4 + 0.2, // 0.2-0.6
+            type: 'checkmark'
+          });
+        }
+      } catch (error) {
+        console.error('Error creating animation element:', error);
+      }
+    }
+    
+    return elements;
+  }, [speed]);
+  
+  /**
+   * Main animation effect
+   */
+  useEffect(() => {
+    // Skip if running in SSR or inputs aren't valid
+    if (typeof window === 'undefined') return;
+    if (!variant || opacity === undefined || speed === undefined || !color) return;
+    
+    // Flag to track initialization
+    let isComponentMounted = true;
+    
+    // Animation frame ID for cleanup
     let animationId: number | undefined;
     
-    // Get canvas and context first - if these fail, don't proceed
-    const canvas = canvasRef.current;
-    if (!canvas) {
-      console.error("Canvas reference not available");
-      return;
-    }
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      console.error("Could not get 2D context");
-      return;
-    }
-    
-    // Array to store animation elements - created after canvas check
-    const elements: Element[] = [];
-    
-    // Function to clear all elements
-    const clearElements = () => {
-      elements.length = 0;
-    };
-    
-    // Initialize or re-initialize the animation
-    const initializeAnimation = () => {
-      console.log(`Initializing ${variant} background animation`); // Debug log
-      
-      // Force a specific size initially to avoid zero dimensions
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      
-      // Set canvas dimensions to match parent
-      const resizeCanvas = () => {
-        const parent = canvas.parentElement;
-        if (parent) {
+    // Initialize after a short delay to ensure component is properly mounted
+    const initTimeout = setTimeout(() => {
+      try {
+        // Get canvas and context
+        const canvas = canvasRef.current;
+        if (!canvas || !isComponentMounted) return;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx || !isComponentMounted) return;
+        
+        // Store animation elements
+        let elements: AnimatedElement[] = [];
+        
+        // Function to resize canvas to match parent dimensions
+        const resizeCanvas = () => {
+          if (!canvas || !isComponentMounted) return;
+          
+          const parent = canvas.parentElement;
+          if (!parent) return;
+          
+          // Default to window dimensions as fallback
           const newWidth = parent.offsetWidth || window.innerWidth;
           const newHeight = parent.offsetHeight || window.innerHeight;
           
-          // Only update if dimensions actually change
+          // Update canvas dimensions if changed
           if (canvas.width !== newWidth || canvas.height !== newHeight) {
             canvas.width = newWidth;
             canvas.height = newHeight;
-            console.log(`Canvas resized to: ${newWidth}x${newHeight}`); // Debug log
             
-            // Re-create elements when resizing to maintain density
-            clearElements();
+            // Recreate elements when canvas size changes
             const elementCount = Math.floor((canvas.width * canvas.height) / 15000);
-            createElements(Math.max(20, elementCount)); // Ensure minimum number of elements
+            elements = createElements(canvas, Math.max(30, elementCount), variant);
           }
-        }
-      };
-      
-      // Initial resize
-      resizeCanvas();
-      
-      // Add resize event listener
-      window.addEventListener('resize', resizeCanvas);
-      
-      // Clear any existing elements
-      clearElements();
-      
-      // Create initial elements based on variant
-      const createElements = (count: number) => {
-        // Make sure we have a valid count
-        const safeCount = Math.max(1, count);
+        };
         
-        for (let i = 0; i < safeCount; i++) {
-          // Calculate position and velocity
-          const x = Math.random() * canvas.width;
-          const y = Math.random() * canvas.height;
-          const baseSpeed = 0.2 * speed;
-          const vx = (Math.random() - 0.5) * baseSpeed;
-          const vy = (Math.random() - 0.5) * baseSpeed;
+        // Set initial canvas size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        resizeCanvas();
+        
+        // Create initial elements
+        const elementCount = Math.floor((canvas.width * canvas.height) / 15000);
+        elements = createElements(canvas, Math.max(30, elementCount), variant);
+        
+        // Add resize listener
+        window.addEventListener('resize', resizeCanvas);
+      
+        /**
+         * Animation loop function
+         */
+        const animate = () => {
+          if (!canvas || !ctx || !isComponentMounted) return;
           
-          // Create element based on variant type
-          if (variant === 'code') {
-            const content = CODE_ELEMENTS[Math.floor(Math.random() * CODE_ELEMENTS.length)];
-            const size = Math.floor(Math.random() * 8) + 10; // 10-18px
-            elements.push({
-              x, y, vx, vy,
-              content,
-              size,
-              opacity: Math.random() * 0.5 + 0.2, // 0.2-0.7
-              type: 'text'
-            });
-          } else if (variant === 'dots') {
-            const size = Math.floor(Math.random() * 2) + COMMIT_DOT_RADIUS - 2; // 2-4px
-            elements.push({
-              x, y, vx, vy,
-              size,
-              opacity: Math.random() * 0.5 + 0.3, // 0.3-0.8
-              type: 'dot'
-            });
-          } else if (variant === 'checkmarks') {
-            const size = Math.floor(Math.random() * 8) + 12; // 12-20px
-            elements.push({
-              x, y, vx, vy,
-              size,
-              opacity: Math.random() * 0.4 + 0.2, // 0.2-0.6
-              type: 'checkmark'
-            });
-          }
-        }
-      };
-      
-      // Create initial elements (number based on canvas size and variant)
-      let elementCount = Math.floor((canvas.width * canvas.height) / 15000);
-      
-      // Adjust density based on variant and ensure minimum count
-      if (variant === 'dots') {
-        elementCount = Math.floor(elementCount * 1.5); // More dots
-      } else if (variant === 'checkmarks') {
-        elementCount = Math.floor(elementCount * 0.8); // Fewer checkmarks
-      }
-      
-      // Ensure a minimum number of elements
-      elementCount = Math.max(30, elementCount);
-      console.log(`Creating ${elementCount} ${variant} elements`); // Debug log
-      
-      createElements(elementCount);
-      
-      // Animation loop
-      const animate = () => {
-        // Skip animation if canvas is not visible (e.g., tab is inactive)
-        if (!canvas.offsetParent || canvas.width === 0 || canvas.height === 0) {
-          animationId = requestAnimationFrame(animate);
-          return;
-        }
-        
-        // Clear canvas with each frame
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Check if we have elements to animate
-        if (elements.length === 0) {
-          console.log('No elements to animate, recreating...'); // Debug log
-          createElements(Math.max(30, Math.floor((canvas.width * canvas.height) / 15000)));
-        }
-        
-        // Update and draw elements
-        elements.forEach(element => {
-          // Update position based on velocity and speed factor
-          element.x += element.vx;
-          element.y += element.vy;
-          
-          // Bounce off edges with proper handling
-          if (element.x < 0) {
-            element.x = 0;
-            element.vx *= -1;
-          } else if (element.x > canvas.width) {
-            element.x = canvas.width;
-            element.vx *= -1;
+          // Skip if canvas is not visible
+          if (!canvas.offsetParent || canvas.width === 0 || canvas.height === 0) {
+            animationId = requestAnimationFrame(animate);
+            return;
           }
           
-          if (element.y < 0) {
-            element.y = 0;
-            element.vy *= -1;
-          } else if (element.y > canvas.height) {
-            element.y = canvas.height;
-            element.vy *= -1;
+          // Clear canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          // Ensure we have elements to animate
+          if (elements.length === 0) {
+            elements = createElements(canvas, 30, variant);
           }
+          
+          // Safe color value
+          const safeColor = color || ANIMATION_CONSTANTS.DEFAULT_COLOR;
+          const safeOpacity = opacity || ANIMATION_CONSTANTS.DEFAULT_OPACITY;
+          
+          // Update and draw each element
+          elements.forEach(element => {
+            try {
+              // Update position
+              element.x += element.vx;
+              element.y += element.vy;
+              
+              // Bounce off edges with proper bounds checking
+              if (element.x < 0) {
+                element.x = 0;
+                element.vx *= -1;
+              } else if (element.x > canvas.width) {
+                element.x = canvas.width;
+                element.vx *= -1;
+              }
+              
+              if (element.y < 0) {
+                element.y = 0;
+                element.vy *= -1;
+              } else if (element.y > canvas.height) {
+                element.y = canvas.height;
+                element.vy *= -1;
+              }
           
           // Draw based on type
           ctx.globalAlpha = element.opacity * opacity;
           ctx.fillStyle = color;
           ctx.strokeStyle = color;
           
-          try {
-            // Set drawing properties based on element type
-            ctx.globalAlpha = element.opacity * opacity;
-            ctx.fillStyle = color;
-            ctx.strokeStyle = color;
-            
-            if (element.type === 'text' && element.content) {
-              // Code elements
-              try {
+              // Set drawing properties
+              ctx.globalAlpha = element.opacity * safeOpacity;
+              ctx.fillStyle = safeColor;
+              ctx.strokeStyle = safeColor;
+              
+              // Draw based on element type
+              if (element.type === 'text' && element.content) {
+                // Code elements
                 ctx.font = `${element.size}px monospace`;
                 ctx.fillText(element.content, element.x, element.y);
-              } catch (err) {
-                console.error('Error drawing text element:', err);
-              }
-            } else if (element.type === 'dot') {
-              // Dots with subtle glow effect
-              try {
+              } else if (element.type === 'dot') {
                 // Main dot
                 ctx.beginPath();
                 ctx.arc(element.x, element.y, element.size, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Add subtle glow
-                ctx.globalAlpha = element.opacity * opacity * 0.4;
+                // Add subtle glow effect
+                ctx.globalAlpha = element.opacity * safeOpacity * 0.4;
                 ctx.beginPath();
                 ctx.arc(element.x, element.y, element.size * 1.5, 0, Math.PI * 2);
                 ctx.fill();
-              } catch (err) {
-                console.error('Error drawing dot element:', err);
-              }
-            } else if (element.type === 'checkmark') {
-              // Simpler checkmark implementation that works across browsers
-              try {
+              } else if (element.type === 'checkmark') {
+                // Simple checkmark using path commands
                 ctx.save();
                 ctx.translate(element.x, element.y);
                 const checkSize = element.size * 0.8;
                 
-                // Draw checkmark manually instead of using Path2D for compatibility
                 ctx.beginPath();
                 ctx.moveTo(-checkSize/2, 0);
                 ctx.lineTo(-checkSize/6, checkSize/2);
@@ -251,44 +256,44 @@ export function AnimatedBackground({
                 ctx.lineWidth = checkSize/4;
                 ctx.stroke();
                 ctx.restore();
-              } catch (err) {
-                console.error('Error drawing checkmark element:', err);
               }
+            } catch (error) {
+              // Silently handle errors in individual elements
+              // to prevent breaking the entire animation
             }
-          } catch (err) {
-            console.error('Error in element rendering:', err);
-          }
-        });
+          });
+          
+          // Request next frame
+          animationId = requestAnimationFrame(animate);
+        };
         
+        // Start the animation
         animationId = requestAnimationFrame(animate);
-      };
+        
+        // Mark as initialized
+        setIsInitialized(true);
+        
+      } catch (error) {
+        console.error('Error initializing animated background:', error);
+      }
+    }, 100); // Short delay to ensure component is mounted
+    
+    // Cleanup function
+    return () => {
+      isComponentMounted = false;
+      clearTimeout(initTimeout);
       
-      // Ensure we have at least some elements before starting animation
-      if (elements.length === 0) {
-        createElements(Math.max(30, Math.floor((canvas.width * canvas.height) / 15000)));
+      if (typeof animationId === 'number') {
+        cancelAnimationFrame(animationId);
       }
       
-      // Start animation
-      animationId = requestAnimationFrame(animate);
-      
-      // Return cleanup function
-      return () => {
-        console.log('Cleaning up animation'); // Debug log
-        window.removeEventListener('resize', resizeCanvas);
-        if (typeof animationId === 'number') cancelAnimationFrame(animationId);
-      };
+      // Remove event listener if canvas still exists
+      if (canvasRef.current) {
+        const canvas = canvasRef.current;
+        window.removeEventListener('resize', () => {});
+      }
     };
-    
-    // Initialize the animation and store cleanup function
-    const cleanup = initializeAnimation();
-    
-    // Return cleanup function for useEffect
-    return () => {
-      console.log('Component unmounting, cleaning up animation'); // Debug log
-      if (cleanup) cleanup();
-      if (typeof animationId === 'number') cancelAnimationFrame(animationId);
-    };
-  }, [variant, opacity, speed, color]);
+  }, [variant, opacity, speed, color, createElements]);
   
   return (
     <canvas 
@@ -296,6 +301,7 @@ export function AnimatedBackground({
       className={`absolute inset-0 pointer-events-none animated-background ${className}`}
       aria-hidden="true"
       style={{ zIndex: 1 }}
+      data-initialized={isInitialized}
     />
   );
 }

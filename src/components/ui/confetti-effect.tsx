@@ -1,31 +1,56 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import confetti from 'canvas-confetti';
+import { useEffect, useState, useCallback } from 'react';
 
-type ConfettiEffectProps = {
+// Define the props interface
+interface ConfettiEffectProps {
   trigger: boolean;
   onComplete?: () => void;
-};
+}
 
-export function ConfettiEffect({ trigger, onComplete }: ConfettiEffectProps) {
-  const [played, setPlayed] = useState(false);
+/**
+ * ConfettiEffect component - Creates a confetti animation effect when triggered
+ * Uses dynamic import to avoid SSR issues and prevent TDZ errors
+ */
+export function ConfettiEffect({ trigger = false, onComplete }: ConfettiEffectProps) {
+  // Initialize state
+  const [played, setPlayed] = useState<boolean>(false);
+  const [confettiModule, setConfettiModule] = useState<any>(null);
 
+  // Load the confetti module dynamically to avoid SSR issues
   useEffect(() => {
-    // Only trigger if the component gets a true trigger and hasn't played yet
-    if (trigger && !played) {
-      // Play the confetti animation
-      const myConfetti = confetti.create(undefined, { 
+    // Only run in browser environment
+    if (typeof window === 'undefined') return;
+
+    // Dynamically import the confetti module
+    import('canvas-confetti')
+      .then(module => {
+        setConfettiModule(module.default);
+      })
+      .catch(error => {
+        console.error('Failed to load confetti module:', error);
+      });
+  }, []);
+
+  // Define the confetti animation function
+  const runConfettiAnimation = useCallback(() => {
+    if (!confettiModule) return;
+    
+    try {
+      // Create confetti instance with safe defaults
+      const myConfetti = confettiModule.create(undefined, { 
         resize: true,
         useWorker: true
       });
       
+      if (!myConfetti) return;
+      
       // Fire multiple bursts for a more impressive effect
       const end = Date.now() + 1000; // duration
-      
       const colors = ['#8b5cf6', '#6d28d9', '#4c1d95', '#7c3aed', '#5b21b6'];
       
-      (function frame() {
+      const frame = () => {
+        // Left side burst
         myConfetti({
           particleCount: 2,
           angle: 60,
@@ -34,6 +59,7 @@ export function ConfettiEffect({ trigger, onComplete }: ConfettiEffectProps) {
           colors: colors
         });
         
+        // Right side burst
         myConfetti({
           particleCount: 2,
           angle: 120,
@@ -46,17 +72,35 @@ export function ConfettiEffect({ trigger, onComplete }: ConfettiEffectProps) {
           requestAnimationFrame(frame);
         } else {
           setPlayed(true);
-          if (onComplete) {
+          if (onComplete && typeof onComplete === 'function') {
             onComplete();
           }
         }
-      }());
+      };
+      
+      // Start the animation
+      frame();
+    } catch (error) {
+      console.error('Error running confetti animation:', error);
+      // Ensure played state is updated even if animation fails
+      setPlayed(true);
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
     }
-  }, [trigger, played, onComplete]);
+  }, [confettiModule, onComplete]);
+
+  // Trigger the confetti effect
+  useEffect(() => {
+    // Only trigger if conditions are met and module is loaded
+    if (trigger && !played && confettiModule) {
+      runConfettiAnimation();
+    }
+  }, [trigger, played, confettiModule, runConfettiAnimation]);
   
   // Reset the played state if trigger becomes false
   useEffect(() => {
-    if (!trigger) {
+    if (trigger === false) {
       setPlayed(false);
     }
   }, [trigger]);
