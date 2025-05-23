@@ -348,15 +348,17 @@ export default function Dashboard() {
         '--theme-secondary': themeColors.secondary,
       } as React.CSSProperties}
     >
-      {/* Animated Background */}
-      {visualSettings.enableAnimations && visualSettings.backgroundStyle !== 'none' && (
-        <AnimatedBackground
-          variant={visualSettings.backgroundStyle}
-          opacity={visualSettings.contrastMode === 'high' ? 0.06 : 0.04}
-          speed={getAnimationSpeed()}
-          color={darkMode ? themeColors.primary : themeColors.secondary}
-        />
-      )}
+      {/* Animated Background - Added position relative to container to ensure canvas works */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
+        {visualSettings.enableAnimations && visualSettings.backgroundStyle !== 'none' && (
+          <AnimatedBackground
+            variant={visualSettings.backgroundStyle}
+            opacity={visualSettings.contrastMode === 'high' ? 0.06 : 0.04}
+            speed={getAnimationSpeed()}
+            color={darkMode ? themeColors.primary : themeColors.secondary}
+          />
+        )}
+      </div>
 
       {/* Confetti Effect */}
       {visualSettings.enableMicrointeractions && (

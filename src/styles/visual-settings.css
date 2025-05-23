@@ -124,3 +124,19 @@
 }
 
 /* Animation speed control is handled in JavaScript */
+
+/* Canvas backgrounds and positioning */
+canvas.animated-background {
+  z-index: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Make content appear above the background */
+header, main, footer, .container {
+  position: relative;
+  z-index: 10;
+}
