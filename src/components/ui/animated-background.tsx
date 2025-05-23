@@ -170,7 +170,7 @@ export function AnimatedBackground({
       if (cleanup) cleanup();
       cancelAnimationFrame(animationId);
     };
-  }, [variant, opacity, speed, color, checkmarkPath, commitDotRadius]);
+  }, [variant, opacity, speed, color, checkmarkPath, commitDotRadius, codeElements]);
   
   return (
     <canvas 

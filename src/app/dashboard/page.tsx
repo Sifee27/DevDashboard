@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, FormEvent, useEffect, useMemo } from 'react';
-import { ExternalLink, Github, Moon, RefreshCcw, Sun } from 'lucide-react';
+import { ExternalLink, Moon, RefreshCcw, Sun } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
