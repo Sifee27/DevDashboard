@@ -167,8 +167,9 @@ export function AnimatedBackground({
         elements = createElements(canvas, Math.max(30, elementCount), variant);
         
         // Add resize listener
+        const canvasElement = canvasRef.current;
         window.addEventListener('resize', resizeCanvas);
-      
+        
         /**
          * Animation loop function
          */
@@ -257,7 +258,7 @@ export function AnimatedBackground({
                 ctx.stroke();
                 ctx.restore();
               }
-            } catch (_) {
+            } catch {
               // Silently handle errors in individual elements
               // to prevent breaking the entire animation
             }
@@ -288,10 +289,9 @@ export function AnimatedBackground({
       }
       
       // Remove event listener if canvas still exists
-      // Copy ref to variable for cleanup to avoid React hooks warning
-      const canvasElement = canvasRef.current;
+      // Cleanup: remove resize event listener using captured ref
       if (canvasElement) {
-        window.removeEventListener('resize', () => {});
+        window.removeEventListener('resize', resizeCanvas);
       }
     };
   }, [variant, opacity, speed, color, createElements]);
