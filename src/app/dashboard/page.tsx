@@ -64,18 +64,10 @@ export default function Dashboard() {
     return true;
   });
   
-  // Theme state management function (used in the theme toggle button)
-  const handleThemeChange = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    
-    // Save to localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('devdashboard-theme', newDarkMode ? 'dark' : 'light');
-    }
-    
+  // Apply theme class based on state
+  const applyTheme = (isDark: boolean) => {
     // Update document class for global theme styling
-    if (newDarkMode) {
+    if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
@@ -84,11 +76,8 @@ export default function Dashboard() {
   
   // Apply the theme when component mounts
   React.useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    applyTheme(darkMode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [darkMode]);
   
   // Simulate loading for demo purposes
