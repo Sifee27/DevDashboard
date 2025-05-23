@@ -19,9 +19,6 @@ export function AnimatedBackground({
 }: AnimatedBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Code pattern elements (brackets, semicolons, etc.)
-  const codeElements = ['{', '}', ';', '()', '[]', '//', '=>', '<>', '&&', '||'];
-  
   // Checkmark and commit elements
   const checkmarkPath = "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z";
   const commitDotRadius = 3;
@@ -150,7 +147,9 @@ export function AnimatedBackground({
       if (cleanup) cleanup();
       cancelAnimationFrame(animationId);
     };
-  }, [variant, opacity, speed, color, codeElements, checkmarkPath, commitDotRadius]);
+    // Code pattern elements moved inside useEffect to prevent dependency changes
+    const codeElements = ['{', '}', ';', '()', '[]', '//', '=>', '<>', '&&', '||'];
+  }, [variant, opacity, speed, color, checkmarkPath, commitDotRadius]);
   
   return (
     <canvas 

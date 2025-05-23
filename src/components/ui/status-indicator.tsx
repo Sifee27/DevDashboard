@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, CheckCircle, Info, Clock } from 'lucide-react';
+import { RefreshCw, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 type StatusIndicatorProps = {
@@ -72,7 +72,7 @@ export function StatusIndicator({
       clearInterval(refreshInterval);
       setRefreshInterval(null);
     }
-  }, [autoRefresh, onRefreshAction]);
+  }, [autoRefresh, onRefreshAction, refreshInterval]);
 
   // Cleanup on unmount
   useEffect(() => {

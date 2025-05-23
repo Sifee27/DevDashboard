@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Settings, Layout, Palette } from 'lucide-react';
 import { CardManager, CardLayoutSettings } from './card-manager';
-import { ThemeManager, ThemeOption } from './theme-manager';
+import { ThemeOption } from './theme-manager';
 import { VisualSettings, VisualSettingsState } from './visual-settings';
 
 type DashboardSettingsProps = {
@@ -12,7 +12,7 @@ type DashboardSettingsProps = {
   onVisualSettingsChangeAction: (settings: VisualSettingsState) => void;
   currentTheme: ThemeOption;
   initialCardLayout?: CardLayoutSettings;
-  initialVisualSettings?: VisualSettingsState;
+  // initialVisualSettings is not used but might be needed in future implementations
   className?: string;
 };
 
@@ -24,7 +24,6 @@ export function DashboardSettings({
   onVisualSettingsChangeAction,
   currentTheme,
   initialCardLayout,
-  initialVisualSettings,
   className = '',
 }: DashboardSettingsProps) {
   const [isOpen, setIsOpen] = useState(false);
