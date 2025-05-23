@@ -45,11 +45,9 @@ export function ConfettiEffect({ trigger = false, onComplete }: ConfettiEffectPr
     if (!confettiModule) return;
     
     try {
-      // Create confetti instance with safe defaults
-      const myConfetti = confettiModule.create(undefined, { 
-        resize: true,
-        useWorker: true
-      });
+      // Create confetti instance without additional options
+      // The Options type doesn't include 'resize' or 'useWorker'
+      const myConfetti = confettiModule.create();
       
       if (!myConfetti) return;
       
