@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { Code2, BookOpen, Github, GitPullRequest, GitCommit, AlertCircle } from 'lucide-react';
 
 export default function Home() {
   // Force dark mode for the landing page
@@ -59,11 +60,11 @@ export default function Home() {
             </h1>
             
             <p className="text-base text-gray-200 max-w-xl mx-auto mb-3 leading-relaxed">
-              The lightweight productivity hub that developers actually want to use.
+              The lightweight productivity tool that developers actually need.
             </p>
             
             <p className="text-xs text-gray-400 max-w-lg mx-auto mb-5">
-              GitHub activity + daily goals in one elegant interface.
+              Your GitHub activity and daily goals in one clean interface.
             </p>
           
             {/* Feature badges */}
@@ -169,35 +170,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section id="how" className="py-12 border-b border-gray-800/40">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>How It Works</h2>
-            <p className="text-gray-400 max-w-lg mx-auto text-sm">
-              Simple setup, powerful results.
-            </p>
-          </div>
 
-          <div className="flex flex-col md:flex-row justify-center items-center gap-6 max-w-4xl mx-auto text-center">
-            <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800 rounded-lg p-5 md:w-1/3">
-              <div className="mb-2 text-violet-500 font-mono font-bold" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>01</div>
-              <h3 className="text-base font-bold mb-2 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Connect GitHub</h3>
-              <p className="text-gray-400 text-sm">Link your GitHub account to see your activity visualized in real-time.</p>
-            </div>
-            <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800 rounded-lg p-5 md:w-1/3">
-              <div className="mb-2 text-violet-500 font-mono font-bold" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>02</div>
-              <h3 className="text-base font-bold mb-2 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Set Goals</h3>
-              <p className="text-gray-400 text-sm">Define your daily development targets and track progress throughout the day.</p>
-            </div>
-            <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800 rounded-lg p-5 md:w-1/3">
-              <div className="mb-2 text-violet-500 font-mono font-bold" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>03</div>
-              <h3 className="text-base font-bold mb-2 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Ship More</h3>
-              <p className="text-gray-400 text-sm">Watch your productivity soar as you stay focused on high-impact tasks.</p>
-            </div>
-          </div>
-        </div>
-      </section>
       
       {/* CTA Section */}
       <section className="py-12">

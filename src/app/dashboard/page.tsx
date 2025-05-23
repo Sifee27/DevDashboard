@@ -1,8 +1,14 @@
 "use client";
 
-import React, { useState, FormEvent } from 'react';
-import { RefreshCcw, Moon, Sun, Github, ExternalLink } from 'lucide-react';
+import React, { useState, FormEvent, useEffect, useMemo } from 'react';
+import { Activity, ExternalLink, Github, GitMerge, GitPullRequest, Moon, RefreshCcw, Sun, Trash2, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { cn } from "../../lib/utils";
+import { Skeleton } from '@/components/ui/skeleton';
+import { TaskItem } from '@/components/ui/task-item';
+import { PRStatusIcon } from '@/components/ui/pr-status-icon';
 
 // Component types
 type CommitActivity = Array<{
@@ -32,6 +38,11 @@ type ChecklistItem = {
 };
 
 export default function Dashboard() {
+  // Loading states
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Repository filter state
+  const [repoFilter, setRepoFilter] = useState<'stars' | 'activity'>('stars');
   // Theme state - initialized from localStorage or system preference
   const [darkMode, setDarkMode] = useState(() => {
     // Check if we're in the browser environment
@@ -74,6 +85,33 @@ export default function Dashboard() {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
+  
+  // Simulate loading for demo purposes
+  React.useEffect(() => {
+    // Show loading state initially
+    setIsLoading(true);
+    
+    // Simulate API/data loading delay
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  // We'll define filteredRepositories after repositories is initialized
+  
+  // Setup dnd sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px of movement required before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   
   // Input state for new tasks
   const [newTask, setNewTask] = useState('');
@@ -118,7 +156,22 @@ export default function Dashboard() {
     { name: 'api-service', stars: 16, lastCommitDate: '2025-05-18', description: 'Core API services' },
     { name: 'ui-components', stars: 57, lastCommitDate: '2025-05-15', description: 'Reusable UI components' },
     { name: 'utilities', stars: 12, lastCommitDate: '2025-05-10', description: 'Helper functions and utilities' },
+    { name: 'docs-site', stars: 8, lastCommitDate: '2025-05-22', description: 'Documentation website' },
+    { name: 'backend', stars: 32, lastCommitDate: '2025-05-19', description: 'Backend services and API endpoints' },
   ]);
+  
+  // Filter repositories based on selected filter
+  const filteredRepositories = useMemo(() => {
+    return [...repositories].sort((a, b) => {
+      if (repoFilter === 'stars') {
+        // Sort by stars (descending)
+        return b.stars - a.stars;
+      } else {
+        // Sort by activity (most recent first)
+        return new Date(b.lastCommitDate).getTime() - new Date(a.lastCommitDate).getTime();
+      }
+    });
+  }, [repositories, repoFilter]);
   
   // Load checklist from localStorage or use default items
   const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
@@ -142,17 +195,42 @@ export default function Dashboard() {
   });
   
   // Save checklist to localStorage when it changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('devdashboard-checklist', JSON.stringify(checklist));
     }
   }, [checklist]);
   
+  // Handle task reordering (drag and drop)
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setChecklist((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        
+        // Notify user of the change
+        toast.success(`Task reordered`);
+        
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+  
   // Toggle checklist item completion
   const toggleChecklistItem = (id: string) => {
-    setChecklist(checklist.map(item => 
-      item.id === id ? { ...item, completed: !item.completed } : item
-    ));
+    setChecklist(checklist.map(item => {
+      if (item.id === id) {
+        const newState = !item.completed;
+        // Show toast notification based on completion state
+        if (newState) {
+          toast.success('Task completed! 🎉');
+        }
+        return { ...item, completed: newState };
+      }
+      return item;
+    }));
   };
   
   // Add new task
@@ -160,14 +238,24 @@ export default function Dashboard() {
     e.preventDefault();
     if (newTask.trim()) {
       const newId = String(Date.now());
-      setChecklist([...checklist, { id: newId, text: newTask.trim(), completed: false }]);
+      const newTaskItem = { id: newId, text: newTask.trim(), completed: false };
+      setChecklist([...checklist, newTaskItem]);
       setNewTask('');
+      toast.success('New task added');
     }
+  };
+  
+  // Delete a task
+  const deleteTask = (id: string) => {
+    setChecklist(checklist.filter(item => item.id !== id));
+    toast('Task removed', { icon: '🗑️' });
   };
   
   // Clear completed tasks
   const clearCompleted = () => {
+    const completedCount = checklist.filter(item => item.completed).length;
     setChecklist(checklist.filter(item => !item.completed));
+    toast(`Cleared ${completedCount} completed ${completedCount === 1 ? 'task' : 'tasks'}`);
   };
   
   // Get status color for PR
@@ -186,10 +274,12 @@ export default function Dashboard() {
       <header className="border-b border-gray-200 dark:border-gray-800 py-4 px-6 bg-white dark:bg-gray-900 shadow-sm">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <div className="h-8 w-8 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center">
-              <Github className="h-5 w-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-blue-500 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>DevDashboard</h1>
+            <a href="/" className="flex items-center space-x-4 hover:opacity-90 transition-opacity">
+              <div className="h-8 w-8 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center">
+                <Github className="h-5 w-5 text-white" />
+              </div>
+              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-blue-500 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>DevDashboard</h1>
+            </a>
           </div>
           
           <div className="flex items-center space-x-3">
@@ -299,24 +389,36 @@ export default function Dashboard() {
               </div>
             </form>
             
-            <ul className="space-y-2 max-h-[230px] overflow-y-auto mb-3">
-              {checklist.map(item => (
-                <li key={item.id} className="flex items-start gap-2 py-1">
-                  <input
-                    type="checkbox"
-                    checked={item.completed}
-                    onChange={() => toggleChecklistItem(item.id)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-blue-500 focus:ring-0 focus:ring-offset-0"
-                  />
-                  <span className={cn(
-                    "text-xs",
-                    item.completed ? 'line-through text-gray-500 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'
-                  )}>
-                    {item.text}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            {isLoading ? (
+              <div className="space-y-3 max-h-[230px] mb-3">
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-full" />
+              </div>
+            ) : (
+              <div className="max-h-[230px] overflow-y-auto mb-3">
+                <DndContext 
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext items={checklist.map(item => item.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-1">
+                      {checklist.map(item => (
+                        <TaskItem 
+                          key={item.id}
+                          id={item.id}
+                          text={item.text}
+                          completed={item.completed}
+                          onToggle={toggleChecklistItem}
+                          onDelete={deleteTask}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
             
             {checklist.some(item => item.completed) && (
               <div className="text-right">
@@ -332,51 +434,108 @@ export default function Dashboard() {
           
           {/* Bottom Row: Open Pull Requests and Top Repositories */}
           <div className="col-span-1 lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
-            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Open Pull Requests</h2>
-            
-            <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
-              {pullRequests.map(pr => (
-                <div key={pr.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <div className="flex justify-between">
-                    <h3 className="text-xs font-medium text-blue-500 truncate mb-1 flex-1">{pr.title}</h3>
-                    <a href={pr.url} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300" aria-label="External link">
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{pr.repository}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(pr.status)}`}>
-                      {pr.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Pull Requests</h2>
+              <div className="flex gap-2">
+                <button className="text-xs px-2 py-1 rounded-md bg-blue-500 text-white font-medium">All</button>
+                <button className="text-xs px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">Open</button>
+              </div>
             </div>
+            
+            {isLoading ? (
+              <div className="space-y-3 pr-1">
+                <Skeleton className="h-16 w-full rounded-md" />
+                <Skeleton className="h-16 w-full rounded-md" />
+                <Skeleton className="h-16 w-full rounded-md" />
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+                {pullRequests.map(pr => (
+                  <div key={pr.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start gap-2">
+                        <PRStatusIcon 
+                          status={pr.status} 
+                          className={pr.status === 'open' ? 'text-green-500' : 
+                                    pr.status === 'merged' ? 'text-purple-500' : 
+                                    'text-gray-400'} 
+                          size={14} 
+                        />
+                        <h3 className="text-xs font-medium text-blue-500 truncate mb-1 flex-1">{pr.title}</h3>
+                      </div>
+                      <a href={pr.url} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300" aria-label="External link">
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                    <div className="flex items-center justify-between mt-2 pl-6">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{pr.repository}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(pr.status)}`}>
+                        {pr.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           
           {/* Top Repositories */}
           <div className="col-span-1 lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg p-5 shadow-md border border-gray-200 dark:border-gray-800">
-            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Top Repositories</h2>
-            
-            <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
-              {repositories.map(repo => (
-                <div key={repo.name} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <h3 className="text-xs font-medium text-blue-500 truncate mb-1">{repo.name}</h3>
-                  {repo.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mb-2">{repo.description}</p>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Top Repositories</h2>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setRepoFilter('stars')} 
+                  className={cn(
+                    "text-xs px-2 py-1 rounded-md transition-colors",
+                    repoFilter === 'stars' 
+                      ? "bg-blue-500 text-white" 
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
                   )}
-                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center">
-                      <svg className="h-3 w-3 mr-1" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z" />
-                      </svg>
-                      {repo.stars}
-                    </div>
-                    <span>Updated {new Date(repo.lastCommitDate).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              ))}
+                >
+                  Most Starred
+                </button>
+                <button 
+                  onClick={() => setRepoFilter('activity')} 
+                  className={cn(
+                    "text-xs px-2 py-1 rounded-md transition-colors",
+                    repoFilter === 'activity' 
+                      ? "bg-blue-500 text-white" 
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                  )}
+                >
+                  Recent Activity
+                </button>
+              </div>
             </div>
+            
+            {isLoading ? (
+              <div className="space-y-3 pr-1">
+                <Skeleton className="h-16 w-full rounded-md" />
+                <Skeleton className="h-16 w-full rounded-md" />
+                <Skeleton className="h-16 w-full rounded-md" />
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+                {filteredRepositories.map(repo => (
+                  <div key={repo.name} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <h3 className="text-xs font-medium text-blue-500 truncate mb-1">{repo.name}</h3>
+                    {repo.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate mb-2">{repo.description}</p>
+                    )}
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center">
+                        <svg className="h-3 w-3 mr-1" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z" />
+                        </svg>
+                        {repo.stars}
+                      </div>
+                      <span>Updated {new Date(repo.lastCommitDate).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </main>
