@@ -11,6 +11,11 @@ export type ThemeSettings = {
 };
 
 const themeStyles = {
+  'system': {
+    background: '#1a1a1a', // Fallback to dark theme colors for system
+    text: '#ffffff',
+    accent: '#8b5cf6'
+  },
   'dark': {
     background: '#1a1a1a',
     text: '#ffffff',
@@ -35,15 +40,15 @@ const themeStyles = {
 
 type ThemeManagerProps = {
   currentTheme: ThemeOption;
-  onThemeChange: (theme: ThemeOption) => void;
+  onThemeChangeAction: (theme: ThemeOption) => void;
   className?: string;
 };
 
-export function ThemeManager({ currentTheme, onThemeChange, className = '' }: ThemeManagerProps) {
+export function ThemeManager({ currentTheme, onThemeChangeAction, className = '' }: ThemeManagerProps) {
   const [isOpen, setIsOpen] = useState(false);
   
   const handleThemeChange = (theme: ThemeOption) => {
-    onThemeChange(theme);
+    onThemeChangeAction(theme);
     setIsOpen(false);
   };
 

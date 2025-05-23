@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, FormEvent, useEffect, useMemo } from 'react';
-import { ExternalLink, Github, Moon, RefreshCcw, Sun, Settings } from 'lucide-react';
+import { ExternalLink, Github, Moon, RefreshCcw, Sun } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { AnimatedBackground } from '@/components/ui/animated-background';
@@ -47,6 +47,7 @@ export default function Dashboard() {
   
   // Repository filter state
   const [repoFilter, setRepoFilter] = useState<'stars' | 'activity'>('stars');
+
   // Theme state - initialized from localStorage or system preference
   const [darkMode, setDarkMode] = useState(() => {
     // Check if we're in the browser environment
@@ -63,8 +64,8 @@ export default function Dashboard() {
     return true;
   });
   
-  // Toggle dark/light mode
-  const toggleTheme = () => {
+  // Theme state management function (used in the theme toggle button)
+  const handleThemeChange = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
     
