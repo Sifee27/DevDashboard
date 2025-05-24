@@ -184,7 +184,7 @@ export function DashboardSettings({
                   </h3>
                   <div className="space-y-4 pb-4">
                     <VisualSettings 
-                      onChangeAction={onVisualSettingsChangeAction}
+                      onSettingsChange={onVisualSettingsChangeAction}
                       className="w-full"
                     />
                   </div>
