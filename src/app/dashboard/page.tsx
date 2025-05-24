@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, FormEvent, useEffect, useMemo, useCallback } from 'react';
-import { ExternalLink, Moon, RefreshCcw, Sun, LineChart, BarChart, LayoutGrid, X, Plus } from 'lucide-react';
+import { ExternalLink, Moon, RefreshCcw, Sun, LineChart, LayoutGrid, X, Plus } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -14,7 +14,7 @@ import { cn } from "../../lib/utils";
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskItem } from '@/components/ui/task-item';
 import { PRStatusIcon } from '@/components/ui/pr-status-icon';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
 import { GitHubStatusBadge } from '@/components/ui/github-status-badge';
