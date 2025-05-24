@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, FormEvent, useEffect, useMemo, useCallback } from 'react';
-import { ExternalLink, Moon, RefreshCcw, Sun } from 'lucide-react';
+import { ExternalLink, Moon, RefreshCcw, Sun, LineChart, BarChart, LayoutGrid, X, Plus } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -14,7 +14,11 @@ import { cn } from "../../lib/utils";
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskItem } from '@/components/ui/task-item';
 import { PRStatusIcon } from '@/components/ui/pr-status-icon';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
+import confetti from 'canvas-confetti';
+import { motion } from 'framer-motion';
+import { GitHubStatusBadge } from '@/components/ui/github-status-badge';
+import { CommitLineChart } from '@/components/ui/commit-line-chart';
 
 // Component types
 type CommitActivity = Array<{
@@ -46,12 +50,13 @@ type ChecklistItem = {
 type DashboardCard = {
   id: string;
   title: string;
-  type: 'github-activity' | 'goals' | 'pull-requests' | 'repositories' | 'languages';
+  type: 'github-activity' | 'goals' | 'pull-requests' | 'repositories' | 'languages' | 'commit-line-chart';
   colSpan: string;
+  visible: boolean;
 };
 
 // Sortable Card Component
-function SortableCard({ id, children, className }: { id: string; children: React.ReactNode; className?: string }) {
+function SortableCard({ id, children, className, onClose }: { id: string; children: React.ReactNode; className?: string; onClose?: () => void }) {
   const {
     attributes,
     listeners,
@@ -68,27 +73,71 @@ function SortableCard({ id, children, className }: { id: string; children: React
     zIndex: isDragging ? 1000 : 'auto',
   };
 
+  // Customize this for each card type or index with the card-1, card-2 classes
+  const cardVariants = {
+    hidden: {
+      opacity: 0,
+      y: 20,
+      scale: 0.95
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 400,
+        damping: 10,
+        duration: 0.5
+      }
+    }
+  };
+
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       style={style}
       className={`${className} ${isDragging ? 'ring-2 ring-blue-500 shadow-2xl scale-105' : ''} group relative transition-all duration-200`}
+      initial="hidden"
+      animate="visible"
+      variants={cardVariants}
+      whileHover={{
+        scale: isDragging ? 1.05 : 1.02,
+        transition: { duration: 0.2 }
+      }}
     >
+      {/* Close button */}
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-200 z-30 p-1 rounded-md bg-red-500 hover:bg-red-600 text-white shadow-lg"
+          title="Close card"
+        >
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+      )}
+
       {/* Drag handle - improved visibility and UX */}
-      <div 
+      <div
         className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-grab active:cursor-grabbing z-20"
         {...attributes}
         {...listeners}
         title="Drag to reorder"
       >
-        <div className="p-2 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-lg border border-gray-200 dark:border-gray-600 backdrop-blur-sm">
+        <motion.div
+          className="p-2 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-lg border border-gray-200 dark:border-gray-600 backdrop-blur-sm"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+        >
           <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20">
             <path d="M7 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-6 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
           </svg>
-        </div>
+        </motion.div>
       </div>
       {children}
-    </div>
+    </motion.div>
   );
 }
 
@@ -111,32 +160,39 @@ function renderCard(card: DashboardCard, props: {
   repoFilter: 'stars' | 'activity';
   setRepoFilter: (filter: 'stars' | 'activity') => void;
   filteredRepositories: Repository[];
+  onCloseCard: (cardId: string) => void;
 }) {
-  const { 
-    commitActivity, 
-    visualSettings, 
-    isLoading, 
-    newTask, 
-    setNewTask, 
-    addTask, 
-    checklist, 
-    sensors, 
-    handleDragEnd, 
-    toggleChecklistItem, 
-    deleteTask, 
+  const {
+    commitActivity,
+    visualSettings,
+    isLoading,
+    newTask,
+    setNewTask,
+    addTask,
+    checklist,
+    sensors,
+    handleDragEnd,
+    toggleChecklistItem,
+    deleteTask,
     clearCompleted,
     pullRequests,
     getStatusColor,
     repoFilter,
     setRepoFilter,
-    filteredRepositories
+    filteredRepositories,
+    onCloseCard
   } = props;
 
-  switch (card.type) {    case 'github-activity':
+  switch (card.type) {
+    case 'github-activity':
       return (
-        <SortableCard id={card.id} className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-1 card dashboard-card min-h-[320px]`}>
+        <SortableCard
+          id={card.id}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-1 card dashboard-card min-h-[320px]`}
+          onClose={() => onCloseCard(card.id)}
+        >
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Recent Activity</h2>
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Recent Activity Heatmap</h2>
             <span className="text-sm text-gray-600 dark:text-gray-400 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">Last 12 weeks</span>
           </div>
 
@@ -152,9 +208,9 @@ function renderCard(card: DashboardCard, props: {
 
               {/* Contribution grid */}
               <div className="flex-1">
-                <div className="grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gridTemplateRows: 'repeat(7, 1fr)', gap: '2px' }}>
+                <div className="grid grid-auto-rows min-h-[180px]" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gridTemplateRows: 'repeat(7, 1fr)', gap: '2px' }}>
                   {Array.from({ length: 84 }).map((_, index) => {
-                    const day = commitActivity[index] || { count: 0 };
+                    const day = commitActivity[index] || { count: 0, date: '' };
 
                     // Map activity level to color - Theme responsive
                     let bgColorClass = 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700';
@@ -172,29 +228,59 @@ function renderCard(card: DashboardCard, props: {
                       <div
                         key={`cell-${index}`}
                         className={`aspect-square rounded-sm ${bgColorClass} hover:ring-1 hover:ring-blue-500 transition-all ${pulseEffect}`}
-                        title={`${day.date}: ${day.count} commits${isToday ? ' (Today)' : ''}`}
+                        title={`${day.date || 'No date'}: ${day.count} commits${isToday ? ' (Today)' : ''}`}
                       />
                     );
                   })}
                 </div>
               </div>
-            </div>
-
-            {/* Legend */}
+            </div>            {/* Legend */}
             <div className="flex justify-end items-center mt-3 text-xs text-gray-500 dark:text-gray-400">
               <span className="mr-2">Less</span>
-              <div className="w-3 h-3 rounded-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mr-1"></div>
-              <div className="w-3 h-3 rounded-sm bg-green-100 dark:bg-green-900 mr-1"></div>
-              <div className="w-3 h-3 rounded-sm bg-green-200 dark:bg-green-800 mr-1"></div>
-              <div className="w-3 h-3 rounded-sm bg-green-300 dark:bg-green-700 mr-1"></div>
-              <div className="w-3 h-3 rounded-sm bg-green-400 dark:bg-green-600 mr-1"></div>
+              {[0, 1, 2, 3, 4].map((level) => (
+                <div
+                  key={`legend-${level}`}
+                  className={`w-3 h-3 rounded-sm mr-1 ${level === 0 ? 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700' :
+                      level === 1 ? 'bg-green-100 dark:bg-green-900' :
+                        level === 2 ? 'bg-green-200 dark:bg-green-800' :
+                          level === 3 ? 'bg-green-300 dark:bg-green-700' :
+                            'bg-green-400 dark:bg-green-600'
+                    }`}
+                />
+              ))}
               <span>More</span>
             </div>
           </div>
-        </SortableCard>
-      );    case 'goals':
+        </SortableCard>); case 'commit-line-chart':
       return (
-        <SortableCard id={card.id} className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-2 card dashboard-card min-h-[320px]`}>
+        <SortableCard
+          id={card.id}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          onClose={() => onCloseCard(card.id)}
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Commit Activity Over Time</h2>
+            <LineChart className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+          </div>
+          {isLoading ? (
+            <div className="space-y-3 pr-1 h-[250px]">
+              <Skeleton className="h-full w-full rounded-md" />
+            </div>
+          ) : (
+            <CommitLineChart
+              data={commitActivity} // Pass commitActivity data
+              isDarkMode={props.visualSettings.colorTheme.includes('dark')} // Determine darkMode for the chart
+              themeColor={props.visualSettings.colorTheme} // Pass theme color
+              height={250} // Set chart height
+            />
+          )}
+        </SortableCard>); case 'goals':
+      return (
+        <SortableCard
+          id={card.id}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-2 card dashboard-card min-h-[320px]`}
+          onClose={() => onCloseCard(card.id)}
+        >
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Today&apos;s Goals</h2>
 
           <form onSubmit={addTask} className="mb-4">
@@ -207,7 +293,7 @@ function renderCard(card: DashboardCard, props: {
                 className="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-xs text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               />
               <button
-                type="submit" 
+                type="submit"
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-theme-primary transition-colors button-hover"
               >
                 <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
@@ -250,7 +336,7 @@ function renderCard(card: DashboardCard, props: {
 
           {checklist.some((item: ChecklistItem) => item.completed) && (
             <div className="text-right">
-              <button 
+              <button
                 onClick={clearCompleted}
                 className="text-xs text-theme-primary hover:opacity-80 transition-colors button-hover button-press"
               >
@@ -258,10 +344,13 @@ function renderCard(card: DashboardCard, props: {
               </button>
             </div>
           )}
-        </SortableCard>
-      );    case 'pull-requests':
+        </SortableCard>); case 'pull-requests':
       return (
-        <SortableCard id={card.id} className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}>
+        <SortableCard
+          id={card.id}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          onClose={() => onCloseCard(card.id)}
+        >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Pull Requests</h2>
             <div className="flex gap-2">
@@ -305,30 +394,33 @@ function renderCard(card: DashboardCard, props: {
               ))}
             </div>
           )}
-        </SortableCard>
-      );    case 'repositories':
+        </SortableCard>); case 'repositories':
       return (
-        <SortableCard id={card.id} className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}>
+        <SortableCard
+          id={card.id}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          onClose={() => onCloseCard(card.id)}
+        >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Top Repositories</h2>
             <div className="flex gap-2">
-              <button 
-                onClick={() => setRepoFilter('stars')} 
+              <button
+                onClick={() => setRepoFilter('stars')}
                 className={cn(
                   "text-xs px-3 py-1.5 rounded-md transition-colors",
                   repoFilter === 'stars'
-                    ? "bg-theme-primary text-white" 
+                    ? "bg-theme-primary text-white"
                     : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
                 )}
               >
                 Most Starred
               </button>
-              <button 
-                onClick={() => setRepoFilter('activity')} 
+              <button
+                onClick={() => setRepoFilter('activity')}
                 className={cn(
                   "text-xs px-3 py-1.5 rounded-md transition-colors",
                   repoFilter === 'activity'
-                    ? "bg-theme-primary text-white" 
+                    ? "bg-theme-primary text-white"
                     : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
                 )}
               >
@@ -366,64 +458,65 @@ function renderCard(card: DashboardCard, props: {
           )}        </SortableCard>
       );
 
-    case 'languages':
-      const languageData = [
-        { name: 'TypeScript', value: 35, color: '#3178c6' },
-        { name: 'JavaScript', value: 28, color: '#f7df1e' },
-        { name: 'Python', value: 20, color: '#3776ab' },
-        { name: 'CSS', value: 10, color: '#1572b6' },
-        { name: 'HTML', value: 7, color: '#e34f26' }
-      ];
+    case 'languages': const languageData = [
+      { name: 'TypeScript', value: 35, color: '#3178c6' },
+      { name: 'JavaScript', value: 28, color: '#f7df1e' },
+      { name: 'Python', value: 20, color: '#3776ab' },
+      { name: 'CSS', value: 10, color: '#1572b6' },
+      { name: 'HTML', value: 7, color: '#e34f26' }
+    ]; return (
+      <SortableCard
+        id={card.id}
+        className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-4 card dashboard-card min-h-[320px]`}
+        onClose={() => onCloseCard(card.id)}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Languages Used</h2>
+        </div>
 
-      return (
-        <SortableCard id={card.id} className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-4 card dashboard-card min-h-[320px]`}>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Languages Used</h2>
+        {isLoading ? (
+          <div className="space-y-3 pr-1">
+            <Skeleton className="h-16 w-full rounded-md" />
+            <Skeleton className="h-16 w-full rounded-md" />
+            <Skeleton className="h-16 w-full rounded-md" />
           </div>
-          
-          {isLoading ? (
-            <div className="space-y-3 pr-1">
-              <Skeleton className="h-16 w-full rounded-md" />
-              <Skeleton className="h-16 w-full rounded-md" />
-              <Skeleton className="h-16 w-full rounded-md" />
-            </div>
-          ) : (
-            <div className="h-60">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={languageData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={80}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {languageData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: any) => [`${value}%`, 'Usage']}
-                    labelFormatter={(label: any) => `${label}`}
-                    contentStyle={{
-                      backgroundColor: 'var(--bg-color)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '8px',
-                      fontSize: '12px'
-                    }}
-                  />
-                  <Legend 
-                    formatter={(value: any) => <span style={{ fontSize: '12px', color: 'var(--text-color)' }}>{value}</span>}
-                    iconSize={10}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </SortableCard>
-      );
+        ) : (
+          <div className="h-60">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={languageData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={40}
+                  outerRadius={80}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {languageData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: any) => [`${value}%`, 'Usage']}
+                  labelFormatter={(label: any) => `${label}`}
+                  contentStyle={{
+                    backgroundColor: 'var(--bg-color)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    fontSize: '12px'
+                  }}
+                />
+                <Legend
+                  formatter={(value: any) => <span style={{ fontSize: '12px', color: 'var(--text-color)' }}>{value}</span>}
+                  iconSize={10}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </SortableCard>
+    );
 
     default:
       return null;
@@ -449,17 +542,20 @@ export default function Dashboard() {
           console.error('Failed to parse card order from localStorage:', e);
         }
       }
-    }    return [
-      { id: 'github-activity', title: 'Recent Activity', type: 'github-activity', colSpan: 'col-span-1 lg:col-span-2' },
-      { id: 'goals', title: "Today's Goals", type: 'goals', colSpan: 'col-span-1' },
-      { id: 'languages', title: 'Languages Used', type: 'languages', colSpan: 'col-span-1' },
-      { id: 'pull-requests', title: 'Pull Requests', type: 'pull-requests', colSpan: 'col-span-1 lg:col-span-2' },
-      { id: 'repositories', title: 'Top Repositories', type: 'repositories', colSpan: 'col-span-1 lg:col-span-2' }
+    } return [
+      { id: 'github-activity', title: 'Recent Activity Heatmap', type: 'github-activity', colSpan: 'col-span-1 lg:col-span-2', visible: true },
+      { id: 'commit-line-chart', title: 'Commit Activity Over Time', type: 'commit-line-chart', colSpan: 'col-span-1 lg:col-span-2', visible: true },
+      { id: 'goals', title: "Today's Goals", type: 'goals', colSpan: 'col-span-1', visible: true },
+      { id: 'languages', title: 'Languages Used', type: 'languages', colSpan: 'col-span-1', visible: true },
+      { id: 'pull-requests', title: 'Pull Requests', type: 'pull-requests', colSpan: 'col-span-1 lg:col-span-2', visible: true },
+      { id: 'repositories', title: 'Top Repositories', type: 'repositories', colSpan: 'col-span-1 lg:col-span-2', visible: true }
     ];
   });
-
   // State for tracking active drag card for overlay
   const [activeCard, setActiveCard] = useState<DashboardCard | null>(null);
+
+  // Card management panel state
+  const [showCardPanel, setShowCardPanel] = useState<boolean>(false);
 
   // Theme state - initialized from localStorage or system preference
   const [darkMode, setDarkMode] = useState(() => {
@@ -615,7 +711,7 @@ export default function Dashboard() {
   }, [cards]);
 
   // Layout presets functionality
-  const [savedLayouts, setSavedLayouts] = useState<{[key: string]: DashboardCard[]}>(() => {
+  const [savedLayouts, setSavedLayouts] = useState<{ [key: string]: DashboardCard[] }>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('devdashboard-saved-layouts');
       if (saved) {
@@ -690,21 +786,57 @@ export default function Dashboard() {
     const card = cards.find(card => card.id === active.id);
     setActiveCard(card || null);
   };
-
   // Reset card layout to default
   const resetLayout = () => {
-    const defaultCards = [
-      { id: 'github-activity', title: 'Recent Activity', type: 'github-activity' as const, colSpan: 'col-span-1 lg:col-span-3' },
-      { id: 'goals', title: "Today's Goals", type: 'goals' as const, colSpan: 'col-span-1' },
-      { id: 'pull-requests', title: 'Pull Requests', type: 'pull-requests' as const, colSpan: 'col-span-1 lg:col-span-2' },
-      { id: 'repositories', title: 'Top Repositories', type: 'repositories' as const, colSpan: 'col-span-1 lg:col-span-2' }
-    ];
-    setCards(defaultCards);
+    const defaultCards: DashboardCard[] = [
+      { id: 'github-activity', title: 'Recent Activity Heatmap', type: 'github-activity', colSpan: 'col-span-1 lg:col-span-2', visible: true },
+      { id: 'commit-line-chart', title: 'Commit Activity Over Time', type: 'commit-line-chart', colSpan: 'col-span-1 lg:col-span-2', visible: true },
+      { id: 'goals', title: "Today's Goals", type: 'goals', colSpan: 'col-span-1', visible: true },
+      { id: 'languages', title: 'Languages Used', type: 'languages', colSpan: 'col-span-1', visible: true },
+      { id: 'pull-requests', title: 'Pull Requests', type: 'pull-requests', colSpan: 'col-span-1 lg:col-span-2', visible: true },
+      { id: 'repositories', title: 'Top Repositories', type: 'repositories', colSpan: 'col-span-1 lg:col-span-2', visible: true }
+    ]; setCards(defaultCards);
     toast.success('Layout reset to default', {
       description: 'Card order has been restored to the original layout',
       duration: 2000,
     });
   };
+
+  // Handle card close/hide functionality
+  const onCloseCard = (cardId: string) => {
+    setCards(prevCards =>
+      prevCards.map(card =>
+        card.id === cardId ? { ...card, visible: false } : card
+      )
+    );
+
+    const cardToClose = cards.find(card => card.id === cardId);
+    toast.success(`Card "${cardToClose?.title}" hidden`, {
+      description: 'You can restore it from the card management panel',
+      duration: 3000,
+    });
+  };
+
+  // Add card back to dashboard
+  const addCard = (cardId: string) => {
+    setCards(prevCards =>
+      prevCards.map(card =>
+        card.id === cardId ? { ...card, visible: true } : card
+      )
+    );
+
+    const cardToAdd = cards.find(card => card.id === cardId);
+    toast.success(`Card "${cardToAdd?.title}" restored`, {
+      description: 'Card has been added back to the dashboard',
+      duration: 2000,
+    });
+  };
+
+  // Get visible cards only
+  const visibleCards = cards.filter(card => card.visible);
+
+  // Get hidden cards for the management panel
+  const hiddenCards = cards.filter(card => !card.visible);
 
   // Handle card drag and drop
   const handleCardDragEnd = (event: DragEndEvent) => {
@@ -717,18 +849,17 @@ export default function Dashboard() {
       setCards((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
-        
+
         const draggedCard = items[oldIndex];
         toast.success(`Moved "${draggedCard?.title}" to new position`, {
           description: 'Dashboard layout has been updated and saved',
           duration: 2000,
         });
-        
+
         return arrayMove(items, oldIndex, newIndex);
       });
     }
   };
-
   // Toggle checklist item completion
   const toggleChecklistItem = (id: string) => {
     setChecklist(checklist.map(item => {
@@ -747,13 +878,49 @@ export default function Dashboard() {
       return item;
     });
 
-    if (visualSettings?.enableMicrointeractions &&
-      updatedList.length > 0 &&
-      updatedList.every(item => item.completed)) {
-      toast.success('All tasks completed! 🎉', {
-        style: { background: '#7c3aed', color: 'white' },
-        duration: 3000,
-      });
+    // Check if all tasks are completed after this update
+    if (updatedList.length > 0 && updatedList.every(item => item.completed)) {
+      // Launch confetti celebration
+      if (visualSettings?.enableMicrointeractions) {
+        // Show a success toast
+        toast.success('All tasks completed! 🎉', {
+          style: { background: '#7c3aed', color: 'white' },
+          duration: 3000,
+        });
+
+        // Trigger confetti animation
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: [
+            themeColors.primary,
+            themeColors.secondary,
+            '#00bcd4',
+            '#ff9800',
+            '#4caf50'
+          ]
+        });
+
+        // Add a second burst for more effect
+        setTimeout(() => {
+          confetti({
+            particleCount: 50,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#ff0000', '#00ff00', '#0000ff']
+          });
+
+          confetti({
+            particleCount: 50,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#ff0000', '#00ff00', '#0000ff']
+          });
+        }, 300);
+      }
     }
   };
 
@@ -792,7 +959,8 @@ export default function Dashboard() {
     }
   };
 
-  // Define theme colors as constants to avoid TDZ issues
+  // GitHub connection status
+  const [isGitHubConnected, setIsGitHubConnected] = useState<boolean>(true);
   const THEME_COLORS = {
     violet: { primary: '#8b5cf6', secondary: '#6d28d9' },
     blue: { primary: '#3b82f6', secondary: '#2563eb' },
@@ -822,7 +990,7 @@ export default function Dashboard() {
   useEffect(() => {
     // Guard against SSR
     if (typeof window === 'undefined' || !window.localStorage) return;
-    
+
     try {
       const savedSettings = localStorage.getItem('visualSettings');
       if (savedSettings) {
@@ -835,7 +1003,7 @@ export default function Dashboard() {
       setVisualSettings(initialVisualSettings);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+  }, []);
 
   // Visual settings state
   const [visualSettings, setVisualSettings] = useState<VisualSettingsState>(initialVisualSettings);
@@ -846,7 +1014,7 @@ export default function Dashboard() {
       localStorage.setItem('visualSettings', JSON.stringify(settings));
     }
   }, []);
-  
+
   // Update visual settings when they change
   useEffect(() => {
     saveVisualSettings(visualSettings);
@@ -869,189 +1037,257 @@ export default function Dashboard() {
   // Get layout spacing class based on density setting
   const getLayoutClasses = () => {
     const baseClasses = "flex flex-col min-h-screen bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-200 relative";
-    
+
     // Safe access to avoid TDZ
     const contrastMode = visualSettings?.contrastMode || 'standard';
     const layoutDensity = visualSettings?.layoutDensity || 'comfortable';
-    
+
     // Add high contrast if enabled
     const contrastClass = contrastMode === 'high' ? 'high-contrast' : '';
-    
+
     // Add layout density classes
     let densityClass = '';
-    switch(layoutDensity) {
+    switch (layoutDensity) {
       case 'compact': densityClass = 'layout-compact'; break;
       case 'comfortable': densityClass = 'layout-comfortable'; break;
       case 'spacious': densityClass = 'layout-spacious'; break;
       default: densityClass = 'layout-comfortable';
     }
-    
+
     return `${baseClasses} ${densityClass} ${contrastClass}`;
   };
-  
+
   // Get the current theme colors - Memoize to avoid recalculation
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const themeColors = useMemo(() => getThemeColor(), [visualSettings?.colorTheme]);
-  
+
   return (
-    <div 
+    <div
       className={getLayoutClasses()}
-      style={{ 
+      style={{
         fontFamily: 'var(--font-space-grotesk)',
         '--theme-primary': themeColors.primary,
         '--theme-secondary': themeColors.secondary,
       } as React.CSSProperties}
     >
       {/* Animated Background - with safety guards against TDZ */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
-        {visualSettings?.enableAnimations && visualSettings?.backgroundStyle !== 'none' && (
+      {visualSettings && visualSettings.backgroundStyle !== 'none' && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
           <AnimatedBackground
-            variant={visualSettings?.backgroundStyle || 'code'}
-            opacity={(visualSettings?.contrastMode === 'high') ? 0.06 : 0.04}
+            variant={visualSettings.backgroundStyle}
+            color={themeColors.primary}
             speed={getAnimationSpeed()}
-            color={darkMode ? 
-                  (themeColors?.primary || '#8b5cf6') : 
-                  (themeColors?.secondary || '#6d28d9')}
           />
-        )}
-      </div>      {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-800 py-4 px-6 bg-white dark:bg-gray-900 shadow-sm">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <Link href="/" className="flex items-center space-x-4 hover:opacity-90 transition-opacity">
-              <div className="h-8 w-8 rounded-md overflow-hidden flex items-center justify-center">
-                <Image src="/Group 2.svg" alt="DevDashboard Logo" width={32} height={32} className="h-full w-full" />
-              </div>
-              <h1
-                className="px-4 py-2 text-white rounded-md text-sm transition-all duration-300 transform hover:scale-105 hover:shadow-md button-press glow-on-hover theme-button"
-                style={{ 
-                  fontFamily: 'var(--font-jetbrains-mono)',
-                  backgroundColor: 'var(--theme-primary)'
-                }}
-              >DevDashboard</h1>
-            </Link>
-          </div>
+        </div>
+      )}
 
-          {/* Centered buttons */}
-          <div className="flex items-center justify-center space-x-3 flex-1">
-            <button
-              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 transform hover:scale-105"
-              aria-label="Refresh dashboard"
-            >
-              <RefreshCcw className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-            </button>
-            <button
-              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 transform hover:scale-105"
-              onClick={() => {
-                setDarkMode(!darkMode);
-                document.documentElement.classList.toggle('dark');
-              }}
-              aria-label="Toggle dark mode"
-            >
-              {darkMode ? (
-                <Sun className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-              ) : (
-                <Moon className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-              )}
-            </button>
-          </div>
+      {/* Header - Sticky with backdrop blur */}
+      <header className="sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 py-3 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md transition-all duration-300">
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-2 group">
+            <Image src="/logo.svg" alt="DevDashboard Logo" width={28} height={28} className="group-hover:rotate-[15deg] transition-transform duration-300" />
+            <h1 className="text-lg font-bold text-gray-800 dark:text-gray-200 group-hover:text-theme-primary transition-colors duration-300" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
+              DevDashboard
+            </h1>
+          </Link>
+        </div>        <div className="flex items-center gap-2 md:gap-3">
+          {/* GitHub Status Badge */}
+          <GitHubStatusBadge isConnected={isGitHubConnected} className="hidden sm:flex" />
 
-          <div className="h-7 w-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
-            GH
+          {/* Card Management Button */}
+          <button
+            onClick={() => setShowCardPanel(true)}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-primary transition-all duration-200 relative"
+            aria-label="Manage cards"
+            title="Manage Dashboard Cards"
+          >
+            <LayoutGrid className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+            {hiddenCards.length > 0 && (
+              <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">
+                {hiddenCards.length}
+              </span>
+            )}
+          </button>
+
+          {/* Refresh Button */}
+          <button
+            onClick={() => {
+              setIsLoading(true);
+              setTimeout(() => setIsLoading(false), 1000);
+              toast.success('Dashboard refreshed', { duration: 1500 });
+            }}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-primary transition-all duration-200"
+            aria-label="Refresh dashboard"
+          >
+            <RefreshCcw className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+          </button>
+
+          {/* Theme Toggle Button */}
+          <button
+            onClick={() => {
+              const newMode = !darkMode;
+              setDarkMode(newMode);
+              localStorage.setItem('devdashboard-theme', newMode ? 'dark' : 'light');
+              toast.success(`Theme changed to ${newMode ? 'Dark' : 'Light'} Mode`, { duration: 1500 });
+            }}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-primary transition-all duration-200"
+            aria-label="Toggle theme"
+          >
+            {darkMode ? (
+              <Sun className="h-4 w-4 text-yellow-400" />
+            ) : (
+              <Moon className="h-4 w-4 text-gray-600" />
+            )}
+          </button>
+
+          {/* Visual Settings Button & Popup */}
+          <VisualSettings
+            onSettingsChange={setVisualSettings}
+            className="relative z-[9999]" // Ensure it's above other elements
+          />
+
+          {/* User Avatar Placeholder */}
+          <div className="w-7 h-7 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-300 ring-1 ring-gray-200 dark:ring-gray-800 hover:ring-theme-primary transition-all duration-200 cursor-pointer" title="User Profile (Coming Soon)">
+            {/* Placeholder for user avatar or initials */}
+            U
           </div>
         </div>
       </header>
 
-      {/* Visual Settings Panel */}
-      <div className="container mx-auto px-6 pt-8 pb-4">
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <h2 className="text-lg font-semibold text-theme-primary font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Dashboard Settings</h2>
-              <div className="hidden lg:flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 px-4 py-2 rounded-full border border-gray-200 dark:border-gray-700">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M7 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-6 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
-                </svg>
-                <span>Hover over cards to drag and reorder</span>
-                <span className="text-gray-400 dark:text-gray-500">•</span>
-                <span title="Ctrl+R: Reset layout, Ctrl+Shift+S: Save layout, Ctrl+1-5: Load saved layouts">Keyboard shortcuts available</span>
-              </div>
-            </div>
-            <VisualSettings
-              onChangeAction={setVisualSettings}
-              className="transition-all duration-200"
-            />
-          </div>
-        </div>
-      </div>
-
-      <main className="flex-1 container mx-auto px-6 py-6 min-h-[calc(100vh-280px)]">
+      {/* Main Content Area */}
+      <main className="flex-1 p-4 md:p-6 relative z-10">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleCardDragStart}
           onDragEnd={handleCardDragEnd}
-        >
-          <SortableContext items={cards.map(card => card.id)} strategy={rectSortingStrategy}>
-            <div className={`grid grid-cols-1 lg:grid-cols-4 gap-8 transition-all duration-300 ${activeCard ? 'drop-zone-active' : ''}`}>
-              {cards.map(card => (
-                <React.Fragment key={card.id}>
-                  {renderCard(card, {
-                    commitActivity,
-                    visualSettings,
-                    isLoading,
-                    newTask,
-                    setNewTask,
-                    addTask,
-                    checklist,
-                    sensors,
-                    handleDragEnd,
-                    toggleChecklistItem,
-                    deleteTask,
-                    clearCompleted,
-                    pullRequests,
-                    getStatusColor,
-                    repoFilter,
-                    setRepoFilter,
-                    filteredRepositories
-                  })}
-                </React.Fragment>
+        >          <SortableContext items={visibleCards.map(card => card.id)} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {visibleCards.map(card => (
+                renderCard(card, {
+                  commitActivity,
+                  visualSettings,
+                  isLoading,
+                  newTask,
+                  setNewTask,
+                  addTask,
+                  checklist,
+                  sensors,
+                  handleDragEnd,
+                  toggleChecklistItem,
+                  deleteTask,
+                  clearCompleted,
+                  pullRequests,
+                  getStatusColor,
+                  repoFilter,
+                  setRepoFilter,
+                  filteredRepositories,
+                  onCloseCard
+                })
               ))}
             </div>
           </SortableContext>
           <DragOverlay>
             {activeCard ? (
-              <div className={`${activeCard.colSpan} bg-white dark:bg-gray-900 rounded-lg p-5 shadow-2xl border-2 border-blue-500 opacity-95 transform rotate-2 scale-105`}>
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 font-mono">
-                    {activeCard.title}
-                  </h2>
-                  <div className="flex items-center gap-2 text-blue-500">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M7 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-6 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-md border border-blue-200 dark:border-blue-700">
-                  <div className="text-sm text-blue-700 dark:text-blue-300 font-medium">
-                    Dragging to reorder...
-                  </div>
-                  <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                    Drop to place in new position
-                  </div>
-                </div>
+              <div className={`${activeCard.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-xl border border-blue-500 opacity-90 scale-105 transform transition-all duration-200`}>                {renderCard(activeCard, {
+                commitActivity,
+                visualSettings,
+                isLoading,
+                newTask,
+                setNewTask,
+                addTask,
+                checklist,
+                sensors,
+                handleDragEnd,
+                toggleChecklistItem,
+                deleteTask,
+                clearCompleted,
+                pullRequests,
+                getStatusColor,
+                repoFilter,
+                setRepoFilter,
+                filteredRepositories,
+                onCloseCard
+              })}
               </div>
             ) : null}
-          </DragOverlay>
-        </DndContext>
+          </DragOverlay>        </DndContext>
       </main>
 
+      {/* Card Management Panel */}
+      {showCardPanel && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                Manage Dashboard Cards
+              </h2>
+              <button
+                onClick={() => setShowCardPanel(false)}
+                className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Close panel"
+              >
+                <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto">
+              {hiddenCards.length === 0 ? (
+                <div className="text-center py-8">
+                  <LayoutGrid className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500 dark:text-gray-400">
+                    All cards are currently visible on your dashboard
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Click on any hidden card to restore it to your dashboard:
+                  </p>
+                  {hiddenCards.map(card => (
+                    <button
+                      key={card.id}
+                      onClick={() => addCard(card.id)}
+                      className="w-full p-3 text-left rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-theme-primary dark:hover:border-theme-primary transition-all duration-200 group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-gray-800 dark:text-gray-200 group-hover:text-theme-primary transition-colors">
+                          {card.title}
+                        </span>
+                        <Plus className="h-4 w-4 text-gray-400 group-hover:text-theme-primary transition-colors" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {hiddenCards.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={() => {
+                      setCards(prevCards =>
+                        prevCards.map(card => ({ ...card, visible: true }))
+                      );
+                      setShowCardPanel(false);
+                      toast.success('All cards restored', {
+                        description: 'All hidden cards have been added back to the dashboard',
+                        duration: 2000,
+                      });
+                    }}
+                    className="w-full p-2 text-sm bg-theme-primary text-white rounded-lg hover:bg-theme-secondary transition-colors"
+                  >
+                    Restore All Cards
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
-      <footer className="container mx-auto px-6 py-6 text-center text-sm text-[#8B949E] mt-8">
-        <p>
-          Built with <span className="text-[#F85149]">❤️</span> by a Developer for Developers |
-          <a href="https://github.com/Sifee27/DevDashboard" className="text-[#58A6FF] hover:underline ml-1">GitHub</a>
-        </p>
+      <footer className="p-4 md:p-6 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800 relative z-10">
+        © {new Date().getFullYear()} DevDashboard. Built with Next.js, Tailwind CSS, and ❤️.
       </footer>
     </div>
   );
