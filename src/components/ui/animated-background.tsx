@@ -50,7 +50,7 @@ export function AnimatedBackground({
   speed = ANIMATION_CONSTANTS.DEFAULT_SPEED,
   color = ANIMATION_CONSTANTS.DEFAULT_COLOR,
   className = '',
-  enableAnimations = true, // Added enableAnimations prop with default value
+  // enableAnimations prop removed as it's not being used
 }: AnimatedBackgroundProps) {
   // Refs for canvas element
   const canvasRef = useRef<HTMLCanvasElement>(null);

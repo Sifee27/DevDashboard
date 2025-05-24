@@ -24,7 +24,8 @@ export const CommitLineChart: FC<CommitLineChartProps> = ({
     themeColor = '#8b5cf6'
 }) => {
     // Consolidate data by week for a better visualization
-    const weeklyData = data.reduce((acc: any[], item, index) => {
+    type WeeklyDataItem = { name: string; commits: number };
+    const weeklyData = data.reduce((acc: WeeklyDataItem[], item, index) => {
         const weekIndex = Math.floor(index / 7);
 
         if (!acc[weekIndex]) {
@@ -84,7 +85,7 @@ export const CommitLineChart: FC<CommitLineChartProps> = ({
                             fontSize: 12
                         }}
                         itemStyle={{ color: themeColor }}
-                        formatter={(value: any) => [`${value} commits`, 'Total']}
+                        formatter={(value: number) => [`${value} commits`, 'Total']}
                         labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
                     />
                     <Line
