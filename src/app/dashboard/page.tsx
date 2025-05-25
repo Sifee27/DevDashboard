@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, FormEvent, useEffect, useMemo, useCallback } from 'react';
-import { ExternalLink, Moon, RefreshCcw, Sun, LineChart, LayoutGrid, X, Play, Pause, RotateCcw, Timer, Palette, Globe, Code2, Wifi, Monitor, Copy, Check, Send } from 'lucide-react';
+import { ExternalLink, Moon, RefreshCcw, Sun, LineChart, LayoutGrid, X, Play, Pause, RotateCcw, Timer } from 'lucide-react'; // Removed unused imports
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';

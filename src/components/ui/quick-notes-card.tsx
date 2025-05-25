@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Copy, Terminal, X, Pencil, Save, Check } from 'lucide-react';
+import { Copy, Terminal, X, Pencil } from 'lucide-react'; // Removed unused imports
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 

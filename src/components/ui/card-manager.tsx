@@ -10,9 +10,12 @@ import { GripVertical, CheckSquare, Square, X } from 'lucide-react';
 export type DashboardCard = {
   id: string;
   title: string;
-  enabled: boolean;
-  size: 'small' | 'medium' | 'large';
-  description: string;
+  enabled?: boolean;
+  size?: string;
+  description?: string;
+  type?: string;
+  colSpan?: string;
+  visible?: boolean; // Added visible property to match usage in reset/page.tsx
 };
 
 export type CardLayoutSettings = {
@@ -168,8 +171,8 @@ export function CardManager({ onUpdateAction, initialSettings, onCloseAction, cl
             title: initialCardFromStorage.title || defaultCardDefinition.title,
             // Correctly use 'enabled' from initialCardFromStorage if it exists (already transformed by DashboardSettings)
             // otherwise, use 'enabled' from defaultCardDefinition
-            enabled: typeof (initialCardFromStorage as any).enabled === 'boolean' 
-                       ? (initialCardFromStorage as any).enabled 
+            enabled: typeof initialCardFromStorage.enabled === 'boolean' 
+                       ? initialCardFromStorage.enabled 
                        : defaultCardDefinition.enabled,
             size: defaultCardDefinition.size,
             description: defaultCardDefinition.description,

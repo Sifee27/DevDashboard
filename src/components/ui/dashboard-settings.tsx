@@ -44,12 +44,12 @@ export function DashboardSettings({
       // Explicitly map 'visible' to 'enabled'.
       // The 'visible' property might not exist on cardFromDashboard if it's already in CardManager's format,
       // so we check its type. Fallback to a default if necessary, though 'enabled' should ideally be present.
-      enabled: typeof (cardFromDashboard as any).visible === 'boolean' ? (cardFromDashboard as any).visible : true,
+      enabled: typeof cardFromDashboard.visible === 'boolean' ? cardFromDashboard.visible : true,
       // 'size' and 'description' might not be on cardFromDashboard if it's from older localStorage.
       // CardManager's merging logic will fill these from its defaultCards.
       // For type safety here, we provide defaults, but CardManager will refine this.
-      size: (cardFromDashboard as any).size || 'medium', 
-      description: (cardFromDashboard as any).description || '',
+      size: cardFromDashboard.size || 'medium', 
+      description: cardFromDashboard.description || '',
     }))
   } : undefined;
 
