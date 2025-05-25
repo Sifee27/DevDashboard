@@ -1,0 +1,290 @@
+/* Visual Customization CSS */
+
+/* Border Radius Classes */
+.border-radius-none .dashboard-card {
+    border-radius: 0;
+}
+
+.border-radius-small .dashboard-card {
+    border-radius: 0.25rem;
+}
+
+.border-radius-medium .dashboard-card {
+    border-radius: 0.5rem;
+}
+
+.border-radius-large .dashboard-card {
+    border-radius: 1rem;
+}
+
+.border-radius-full .dashboard-card {
+    border-radius: 1.5rem;
+}
+
+/* Card Shadow Classes */
+.card-shadow-none .dashboard-card {
+    box-shadow: none;
+}
+
+.card-shadow-subtle .dashboard-card {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.card-shadow-medium .dashboard-card {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.card-shadow-strong .dashboard-card {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.card-shadow-glow .dashboard-card {
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.05), 0 4px 6px -1px rgba(139, 92, 246, 0.1), 0 2px 4px -1px rgba(139, 92, 246, 0.06);
+}
+
+/* Card Style Classes */
+.card-style-flat .dashboard-card {
+    background: rgb(255, 255, 255);
+    border: 1px solid rgb(229, 231, 235);
+    box-shadow: none;
+}
+
+.dark .card-style-flat .dashboard-card {
+    background: rgb(17, 24, 39);
+    border: 1px solid rgb(55, 65, 81);
+}
+
+.card-style-elevated .dashboard-card {
+    background: rgb(255, 255, 255);
+    border: 1px solid rgb(229, 231, 235);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dark .card-style-elevated .dashboard-card {
+    background: rgb(17, 24, 39);
+    border: 1px solid rgb(55, 65, 81);
+}
+
+.card-style-outlined .dashboard-card {
+    background: transparent;
+    border: 2px solid rgb(229, 231, 235);
+    box-shadow: none;
+}
+
+.dark .card-style-outlined .dashboard-card {
+    border: 2px solid rgb(55, 65, 81);
+}
+
+.card-style-glass .dashboard-card {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+.dark .card-style-glass .dashboard-card {
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px solid rgba(55, 65, 81, 0.3);
+}
+
+.card-style-gradient .dashboard-card {
+    background: linear-gradient(135deg, rgb(255, 255, 255) 0%, rgb(243, 244, 246) 100%);
+    border: 1px solid rgb(229, 231, 235);
+}
+
+.dark .card-style-gradient .dashboard-card {
+    background: linear-gradient(135deg, rgb(17, 24, 39) 0%, rgb(31, 41, 55) 100%);
+    border: 1px solid rgb(55, 65, 81);
+}
+
+/* Font Family Classes */
+.font-family-system {
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+.font-family-mono {
+    font-family: 'JetBrains Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+.font-family-sans {
+    font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.font-family-serif {
+    font-family: 'Times New Roman', Times, serif;
+}
+
+/* Spacing Classes */
+.spacing-tight .dashboard-card {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.spacing-normal .dashboard-card {
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.spacing-relaxed .dashboard-card {
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.spacing-tight .grid {
+    gap: 0.75rem;
+}
+
+.spacing-normal .grid {
+    gap: 1rem;
+}
+
+.spacing-relaxed .grid {
+    gap: 1.5rem;
+}
+
+/* Theme Color Variables */
+.theme-violet {
+    --theme-primary: #8b5cf6;
+    --theme-secondary: #7c3aed;
+    --theme-accent: #a78bfa;
+    --theme-light: #f3f4f6;
+    --theme-dark: #1f2937;
+}
+
+.theme-blue {
+    --theme-primary: #3b82f6;
+    --theme-secondary: #2563eb;
+    --theme-accent: #60a5fa;
+    --theme-light: #f3f4f6;
+    --theme-dark: #1f2937;
+}
+
+.theme-green {
+    --theme-primary: #10b981;
+    --theme-secondary: #059669;
+    --theme-accent: #34d399;
+    --theme-light: #f3f4f6;
+    --theme-dark: #1f2937;
+}
+
+.theme-amber {
+    --theme-primary: #f59e0b;
+    --theme-secondary: #d97706;
+    --theme-accent: #fbbf24;
+    --theme-light: #f3f4f6;
+    --theme-dark: #1f2937;
+}
+
+.theme-rose {
+    --theme-primary: #f43f5e;
+    --theme-secondary: #e11d48;
+    --theme-accent: #fb7185;
+    --theme-light: #f3f4f6;
+    --theme-dark: #1f2937;
+}
+
+.theme-cyan {
+    --theme-primary: #06b6d4;
+    --theme-secondary: #0891b2;
+    --theme-accent: #22d3ee;
+    --theme-light: #f3f4f6;
+    --theme-dark: #1f2937;
+}
+
+.theme-orange {
+    --theme-primary: #f97316;
+    --theme-secondary: #ea580c;
+    --theme-accent: #fb923c;
+    --theme-light: #f3f4f6;
+    --theme-dark: #1f2937;
+}
+
+.theme-emerald {
+    --theme-primary: #10b981;
+    --theme-secondary: #059669;
+    --theme-accent: #34d399;
+    --theme-light: #f3f4f6;
+    --theme-dark: #1f2937;
+}
+
+/* Enhanced Background Animations */
+.background-particles canvas {
+    pointer-events: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+.background-matrix canvas {
+    pointer-events: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    opacity: 0.1;
+}
+
+/* Hover effects for different card styles */
+.card-style-elevated .dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.card-style-glass .dashboard-card:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.dark .card-style-glass .dashboard-card:hover {
+    background: rgba(17, 24, 39, 0.9);
+}
+
+.card-style-outlined .dashboard-card:hover {
+    border-color: var(--theme-primary);
+    box-shadow: 0 0 0 1px var(--theme-primary);
+}
+
+/* Animation Speed Controls */
+.animation-speed-slow * {
+    transition-duration: 0.5s !important;
+    animation-duration: 2s !important;
+}
+
+.animation-speed-normal * {
+    transition-duration: 0.3s !important;
+    animation-duration: 1s !important;
+}
+
+.animation-speed-fast * {
+    transition-duration: 0.15s !important;
+    animation-duration: 0.5s !important;
+}
+
+/* Layout Density Controls */
+.layout-density-compact .dashboard-card {
+    min-height: 250px;
+}
+
+.layout-density-comfortable .dashboard-card {
+    min-height: 320px;
+}
+
+.layout-density-spacious .dashboard-card {
+    min-height: 400px;
+}
+
+.layout-density-compact .grid {
+    gap: 0.75rem;
+}
+
+.layout-density-comfortable .grid {
+    gap: 1rem;
+}
+
+.layout-density-spacious .grid {
+    gap: 1.5rem;
+}

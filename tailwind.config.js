@@ -7,6 +7,7 @@ module.exports = {
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
   ],
+  plugins: [require('@tailwindcss/typography')],
   theme: {
     container: {
       center: true,

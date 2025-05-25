@@ -23,7 +23,7 @@ export function DashboardSettings({
   onThemeChangeAction,
   onVisualSettingsChangeAction,
   currentTheme,
-  initialCardLayout,
+  initialCardLayout, // This is CardLayoutSettings from dashboard/page.tsx, potentially with 'visible'
   className = '',
 }: DashboardSettingsProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,6 +32,26 @@ export function DashboardSettings({
   const handleClose = () => {
     setIsOpen(false);
   };
+
+  // Transform initialCardLayout from dashboard/page.tsx to CardManager's expected format
+  // This maps 'visible' (from dashboard page state) to 'enabled' (for CardManager)
+  // and ensures all properties of CardManager's DashboardCard type are present.
+  const cardManagerInitialSettings: CardLayoutSettings | undefined = initialCardLayout ? {
+    ...initialCardLayout,
+    cards: initialCardLayout.cards.map(cardFromDashboard => ({
+      id: cardFromDashboard.id,
+      title: cardFromDashboard.title,
+      // Explicitly map 'visible' to 'enabled'.
+      // The 'visible' property might not exist on cardFromDashboard if it's already in CardManager's format,
+      // so we check its type. Fallback to a default if necessary, though 'enabled' should ideally be present.
+      enabled: typeof (cardFromDashboard as any).visible === 'boolean' ? (cardFromDashboard as any).visible : true,
+      // 'size' and 'description' might not be on cardFromDashboard if it's from older localStorage.
+      // CardManager's merging logic will fill these from its defaultCards.
+      // For type safety here, we provide defaults, but CardManager will refine this.
+      size: (cardFromDashboard as any).size || 'medium', 
+      description: (cardFromDashboard as any).description || '',
+    }))
+  } : undefined;
 
   return (
     <div className={`relative ${className}`}>
@@ -104,7 +124,7 @@ export function DashboardSettings({
               {activeTab === 'cards' && (
                 <CardManager
                   onUpdateAction={onCardLayoutChangeAction}
-                  initialSettings={initialCardLayout}
+                  initialSettings={cardManagerInitialSettings} // Use the transformed settings
                   onCloseAction={handleClose}
                 />
               )}
