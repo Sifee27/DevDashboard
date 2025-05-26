@@ -1,4 +1,8 @@
 /** @type {import('tailwindcss').Config} */
+/* eslint-disable @typescript-eslint/no-require-imports */
+const typography = require('@tailwindcss/typography');
+const tailwindcssAnimate = require('tailwindcss-animate');
+
 module.exports = {
   darkMode: ["class"],
   content: [
@@ -7,6 +11,7 @@ module.exports = {
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
   ],
+  plugins: [typography, tailwindcssAnimate],
   theme: {
     container: {
       center: true,
@@ -78,8 +83,7 @@ module.exports = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-      },
-      keyframes: {
+      },      keyframes: {
         "accordion-down": {
           from: { height: 0 },
           to: { height: "var(--radix-accordion-content-height)" },
@@ -102,13 +106,38 @@ module.exports = {
             transform: "translate(0px, 0px) scale(1)",
           },
         },
+        fadeIn: {
+          from: { opacity: 0 },
+          to: { opacity: 1 },
+        },
+        slideInUp: {
+          from: { 
+            transform: "translateY(20px)",
+            opacity: 0,
+          },
+          to: { 
+            transform: "translateY(0)",
+            opacity: 1,
+          },
+        },
+        spinSlow: {
+          from: { transform: "translate(-50%, -50%) rotate(0deg)" },
+          to: { transform: "translate(-50%, -50%) rotate(360deg)" },
+        },
+        spinSlowReverse: {
+          from: { transform: "translate(-50%, -50%) rotate(0deg)" },
+          to: { transform: "translate(-50%, -50%) rotate(-360deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "blob": "blob 7s infinite",
+        "fade-in": "fadeIn 0.5s ease-out forwards",
+        "slide-up": "slideInUp 0.5s ease-out forwards",
+        "spin-slow": "spinSlow 30s linear infinite",
+        "spin-slow-reverse": "spinSlowReverse 30s linear infinite",
       },
-    },
-  },
-  plugins: [require("tailwindcss-animate")],
+    },  },
+  plugins: [typography, tailwindcssAnimate],
 }

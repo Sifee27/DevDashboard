@@ -101,7 +101,6 @@
     background-image: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
     background-size: 20px 20px;
   }
-
   .animate-blob {
     animation: blob 7s infinite;
   }
@@ -112,6 +111,45 @@
 
   .animation-delay-4000 {
     animation-delay: 4s;
+  }
+
+  /* Landing page animations */
+  .animate-delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .animate-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animate-delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .animate-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .animate-delay-500 {
+    animation-delay: 500ms;
+  }
+
+  /* Button effects */
+  .button-hover {
+    transition: all 0.2s ease;
+  }
+
+  .button-hover:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+  }
+
+  .button-press {
+    transition: transform 0.1s ease;
+  }
+
+  .button-press:active {
+    transform: scale(0.96);
   }
 
   @keyframes blob {
@@ -131,4 +169,192 @@
       transform: translate(0px, 0px) scale(1);
     }
   }
+}
+
+/* Visual Customization Classes */
+
+/* Border Radius Classes */
+.border-radius-none .dashboard-card {
+  border-radius: 0;
+}
+
+.border-radius-small .dashboard-card {
+  border-radius: 0.25rem;
+}
+
+.border-radius-medium .dashboard-card {
+  border-radius: 0.5rem;
+}
+
+.border-radius-large .dashboard-card {
+  border-radius: 1rem;
+}
+
+.border-radius-full .dashboard-card {
+  border-radius: 1.5rem;
+}
+
+/* Card Shadow Classes */
+.card-shadow-none .dashboard-card {
+  box-shadow: none;
+}
+
+.card-shadow-subtle .dashboard-card {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.card-shadow-medium .dashboard-card {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.card-shadow-strong .dashboard-card {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.card-shadow-glow .dashboard-card {
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.05), 0 4px 6px -1px rgba(139, 92, 246, 0.1), 0 2px 4px -1px rgba(139, 92, 246, 0.06);
+}
+
+/* Card Style Classes */
+.card-style-flat .dashboard-card {
+  background: rgb(255, 255, 255);
+  border: 1px solid rgb(229, 231, 235);
+  box-shadow: none;
+}
+
+.dark .card-style-flat .dashboard-card {
+  background: rgb(17, 24, 39);
+  border: 1px solid rgb(55, 65, 81);
+}
+
+.card-style-elevated .dashboard-card {
+  background: rgb(255, 255, 255);
+  border: 1px solid rgb(229, 231, 235);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dark .card-style-elevated .dashboard-card {
+  background: rgb(17, 24, 39);
+  border: 1px solid rgb(55, 65, 81);
+}
+
+.card-style-outlined .dashboard-card {
+  background: transparent;
+  border: 2px solid rgb(139, 92, 246);
+  box-shadow: none;
+}
+
+.dark .card-style-outlined .dashboard-card {
+  border: 2px solid rgb(139, 92, 246);
+}
+
+.card-style-glass .dashboard-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+.dark .card-style-glass .dashboard-card {
+  background: rgba(17, 24, 39, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-style-gradient .dashboard-card {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(219, 39, 119, 0.1) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dark .card-style-gradient .dashboard-card {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(219, 39, 119, 0.2) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* Font Family Classes */
+.font-family-system {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.font-family-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+}
+
+.font-family-sans {
+  font-family: Inter, -apple-system, sans-serif;
+}
+
+.font-family-serif {
+  font-family: ui-serif, Georgia, serif;
+}
+
+/* Spacing Classes */
+.spacing-tight .dashboard-card {
+  padding: 0.75rem;
+}
+
+.spacing-normal .dashboard-card {
+  padding: 1.5rem;
+}
+
+.spacing-relaxed .dashboard-card {
+  padding: 2rem;
+}
+
+.spacing-tight .space-y-3>*+* {
+  margin-top: 0.5rem;
+}
+
+.spacing-normal .space-y-3>*+* {
+  margin-top: 0.75rem;
+}
+
+.spacing-relaxed .space-y-3>*+* {
+  margin-top: 1rem;
+}
+
+/* Theme Color Variables */
+:root {
+  --theme-primary: #8b5cf6;
+  --theme-secondary: #6d28d9;
+}
+
+[data-theme="violet"] {
+  --theme-primary: #8b5cf6;
+  --theme-secondary: #6d28d9;
+}
+
+[data-theme="blue"] {
+  --theme-primary: #3b82f6;
+  --theme-secondary: #1d4ed8;
+}
+
+[data-theme="green"] {
+  --theme-primary: #10b981;
+  --theme-secondary: #059669;
+}
+
+[data-theme="amber"] {
+  --theme-primary: #f59e0b;
+  --theme-secondary: #d97706;
+}
+
+[data-theme="rose"] {
+  --theme-primary: #f43f5e;
+  --theme-secondary: #e11d48;
+}
+
+[data-theme="cyan"] {
+  --theme-primary: #06b6d4;
+  --theme-secondary: #0891b2;
+}
+
+[data-theme="orange"] {
+  --theme-primary: #f97316;
+  --theme-secondary: #ea580c;
+}
+
+[data-theme="emerald"] {
+  --theme-primary: #10b981;
+  --theme-secondary: #059669;
 }

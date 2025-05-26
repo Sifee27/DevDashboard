@@ -21,6 +21,7 @@ interface AnimatedElement {
  */
 const ANIMATION_CONSTANTS = {
   CODE_ELEMENTS: ['{', '}', ';', '()', '[]', '//', '=>', '<>', '&&', '||'],
+  MATRIX_CHARACTERS: ['0', '1', 'α', 'β', 'γ', 'δ', 'ε', 'ζ', 'η', 'θ', 'λ', 'μ', 'π', 'ρ', 'σ', 'τ', 'φ', 'χ', 'ψ', 'ω'],
   COMMIT_DOT_RADIUS: 4,
   DEFAULT_COLOR: '#6d28d9',
   DEFAULT_OPACITY: 0.03,
@@ -32,12 +33,11 @@ const ANIMATION_CONSTANTS = {
  * Props interface for the AnimatedBackground component
  */
 interface AnimatedBackgroundProps {
-  variant?: 'code' | 'dots' | 'checkmarks';
+  variant?: 'code' | 'dots' | 'checkmarks' | 'particles' | 'matrix';
   opacity?: number;
   speed?: number;
   color?: string;
   className?: string;
-  enableAnimations?: boolean; // Added enableAnimations prop
 }
 
 /**
@@ -50,7 +50,6 @@ export function AnimatedBackground({
   speed = ANIMATION_CONSTANTS.DEFAULT_SPEED,
   color = ANIMATION_CONSTANTS.DEFAULT_COLOR,
   className = '',
-  // enableAnimations prop removed as it's not being used
 }: AnimatedBackgroundProps) {
   // Refs for canvas element
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -75,7 +74,6 @@ export function AnimatedBackground({
         const baseSpeed = 0.2 * (speed || ANIMATION_CONSTANTS.DEFAULT_SPEED);
         const vx = (Math.random() - 0.5) * baseSpeed;
         const vy = (Math.random() - 0.5) * baseSpeed;
-
         // Create elements based on variant
         if (variant === 'code') {
           const codeElements = ANIMATION_CONSTANTS.CODE_ELEMENTS;
@@ -93,6 +91,25 @@ export function AnimatedBackground({
             size: Math.floor(Math.random() * 2) + ANIMATION_CONSTANTS.COMMIT_DOT_RADIUS - 2, // 2-4px
             opacity: Math.random() * 0.5 + 0.3, // 0.3-0.8
             type: 'dot'
+          });
+        } else if (variant === 'particles') {
+          elements.push({
+            x, y, vx, vy,
+            size: Math.floor(Math.random() * 3) + 1, // 1-4px
+            opacity: Math.random() * 0.8 + 0.2, // 0.2-1.0
+            type: 'particle'
+          });
+        } else if (variant === 'matrix') {
+          const matrixChars = ANIMATION_CONSTANTS.MATRIX_CHARACTERS;
+          const content = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+          elements.push({
+            x, y,
+            vx: 0, // Matrix characters fall straight down
+            vy: (Math.random() * 2 + 0.5) * baseSpeed * 10, // Faster falling speed
+            content,
+            size: Math.floor(Math.random() * 6) + 12, // 12-18px
+            opacity: Math.random() * 0.8 + 0.2, // 0.2-1.0
+            type: 'matrix'
           });
         } else {
           elements.push({
@@ -185,26 +202,38 @@ export function AnimatedBackground({
 
           // Update and draw each element
           elements.forEach(element => {
-            try {
-              // Update position
+            try {              // Update position
               element.x += element.vx;
               element.y += element.vy;
 
-              // Bounce off edges with proper bounds checking
-              if (element.x < 0) {
-                element.x = 0;
-                element.vx *= -1;
-              } else if (element.x > canvas.width) {
-                element.x = canvas.width;
-                element.vx *= -1;
-              }
+              // Handle different boundary behaviors based on type
+              if (element.type === 'matrix') {
+                // Matrix characters fall down and reset at top
+                if (element.y > canvas.height + element.size) {
+                  element.y = -element.size;
+                  element.x = Math.random() * canvas.width;
+                }
+                // Keep within horizontal bounds
+                if (element.x < 0 || element.x > canvas.width) {
+                  element.x = Math.random() * canvas.width;
+                }
+              } else {
+                // Bounce off edges with proper bounds checking for other types
+                if (element.x < 0) {
+                  element.x = 0;
+                  element.vx *= -1;
+                } else if (element.x > canvas.width) {
+                  element.x = canvas.width;
+                  element.vx *= -1;
+                }
 
-              if (element.y < 0) {
-                element.y = 0;
-                element.vy *= -1;
-              } else if (element.y > canvas.height) {
-                element.y = canvas.height;
-                element.vy *= -1;
+                if (element.y < 0) {
+                  element.y = 0;
+                  element.vy *= -1;
+                } else if (element.y > canvas.height) {
+                  element.y = canvas.height;
+                  element.vy *= -1;
+                }
               }
 
               // Draw based on type
@@ -216,7 +245,6 @@ export function AnimatedBackground({
               ctx.globalAlpha = element.opacity * safeOpacity;
               ctx.fillStyle = safeColor;
               ctx.strokeStyle = safeColor;
-
               // Draw based on element type
               if (element.type === 'text' && element.content) {
                 // Code elements
@@ -233,6 +261,29 @@ export function AnimatedBackground({
                 ctx.beginPath();
                 ctx.arc(element.x, element.y, element.size * 1.5, 0, Math.PI * 2);
                 ctx.fill();
+              } else if (element.type === 'particle') {
+                // Small floating particles
+                ctx.beginPath();
+                ctx.arc(element.x, element.y, element.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Add particle trail effect
+                ctx.globalAlpha = element.opacity * safeOpacity * 0.3;
+                ctx.beginPath();
+                ctx.arc(element.x - element.vx * 5, element.y - element.vy * 5, element.size * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+              } else if (element.type === 'matrix' && element.content) {
+                // Matrix-style falling characters
+                ctx.font = `${element.size}px monospace`;
+                ctx.fillStyle = safeColor === '#6d28d9' ? '#00ff00' : safeColor; // Default to green for matrix
+                ctx.fillText(element.content, element.x, element.y);
+
+                // Add trailing effect
+                const trailLength = 3;
+                for (let i = 1; i <= trailLength; i++) {
+                  ctx.globalAlpha = (element.opacity * safeOpacity) / (i + 1);
+                  ctx.fillText(element.content, element.x, element.y - (element.size * i * 0.8));
+                }
               } else if (element.type === 'checkmark') {
                 // Simple checkmark using path commands
                 ctx.save();

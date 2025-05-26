@@ -11,17 +11,21 @@ type VisualSettingsProps = {
 
 export type VisualSettingsState = {
   enableAnimations: boolean;
-  backgroundStyle: 'none' | 'code' | 'dots' | 'checkmarks';
+  backgroundStyle: 'none' | 'code' | 'dots' | 'checkmarks' | 'particles' | 'matrix';
   enableMicrointeractions: boolean;
-  colorTheme: 'violet' | 'blue' | 'green' | 'amber';
+  colorTheme: 'violet' | 'blue' | 'green' | 'amber' | 'rose' | 'cyan' | 'orange' | 'emerald';
   animationSpeed: 'slow' | 'normal' | 'fast';
   layoutDensity: 'compact' | 'comfortable' | 'spacious';
   contrastMode: 'standard' | 'high';
+  borderRadius: 'none' | 'small' | 'medium' | 'large' | 'full';
+  cardShadow: 'none' | 'subtle' | 'medium' | 'strong' | 'glow';
+  fontFamily: 'system' | 'mono' | 'sans' | 'serif';
+  cardStyle: 'flat' | 'elevated' | 'outlined' | 'glass' | 'gradient';
+  spacing: 'tight' | 'normal' | 'relaxed';
 };
 
 export function VisualSettings({ onSettingsChange, className = '' }: VisualSettingsProps) { // Changed from onChangeAction
-  const [isOpen, setIsOpen] = useState(false);
-  const [settings, setSettings] = useState<VisualSettingsState>({
+  const [isOpen, setIsOpen] = useState(false); const [settings, setSettings] = useState<VisualSettingsState>({
     enableAnimations: true,
     backgroundStyle: 'code',
     enableMicrointeractions: true,
@@ -29,6 +33,11 @@ export function VisualSettings({ onSettingsChange, className = '' }: VisualSetti
     animationSpeed: 'normal',
     layoutDensity: 'comfortable',
     contrastMode: 'standard',
+    borderRadius: 'medium',
+    cardShadow: 'medium',
+    fontFamily: 'system',
+    cardStyle: 'elevated',
+    spacing: 'normal',
   });
   const [isMounted, setIsMounted] = useState(false);
 
@@ -153,12 +162,10 @@ export function VisualSettings({ onSettingsChange, className = '' }: VisualSetti
                 </div>
 
                 <div className="border-b dark:border-gray-700 pb-2">
-                  <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-2">Theme</h4>
-
-                  <div className="mb-2">
+                  <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-2">Theme</h4>                  <div className="mb-2">
                     <span className="text-xs text-gray-700 dark:text-gray-300 block mb-1.5">Color accent</span>
                     <div className="grid grid-cols-4 gap-1.5">
-                      {(['violet', 'blue', 'green', 'amber'] as const).map((theme) => (
+                      {(['violet', 'blue', 'green', 'amber', 'rose', 'cyan', 'orange', 'emerald'] as const).map((theme) => (
                         <button
                           key={theme}
                           onClick={() => updateSettings({ colorTheme: theme })}
@@ -168,7 +175,11 @@ export function VisualSettings({ onSettingsChange, className = '' }: VisualSetti
                               theme === 'violet' ? '#8b5cf6' :
                                 theme === 'blue' ? '#3b82f6' :
                                   theme === 'green' ? '#10b981' :
-                                    '#f59e0b'
+                                    theme === 'amber' ? '#f59e0b' :
+                                      theme === 'rose' ? '#f43f5e' :
+                                        theme === 'cyan' ? '#06b6d4' :
+                                          theme === 'orange' ? '#f97316' :
+                                            '#10b981'
                           }}
                           title={theme.charAt(0).toUpperCase() + theme.slice(1)}
                           aria-label={`${theme} color theme`}
@@ -189,18 +200,16 @@ export function VisualSettings({ onSettingsChange, className = '' }: VisualSetti
                 </div>
 
                 <div className="border-b dark:border-gray-700 pb-2">
-                  <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-2">Background</h4>
-
-                  <div className="mb-2">
+                  <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-2">Background</h4>                  <div className="mb-2">
                     <span className="text-xs text-gray-700 dark:text-gray-300 block mb-1.5">Style</span>
                     <div className="grid grid-cols-2 gap-1.5">
-                      {(['none', 'code', 'dots', 'checkmarks'] as const).map((style) => (
+                      {(['none', 'code', 'dots', 'checkmarks', 'particles', 'matrix'] as const).map((style) => (
                         <button
                           key={style}
                           onClick={() => updateSettings({ backgroundStyle: style })}
                           className={`text-xs px-2 py-1 rounded-md transition-colors ${settings.backgroundStyle === style
-                              ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-700'
-                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-700'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                             } border`}
                         >
                           {style.charAt(0).toUpperCase() + style.slice(1)}
@@ -221,17 +230,15 @@ export function VisualSettings({ onSettingsChange, className = '' }: VisualSetti
                           key={speed}
                           onClick={() => updateSettings({ animationSpeed: speed })}
                           className={`text-xs px-2 py-1 rounded-md transition-colors ${settings.animationSpeed === speed
-                              ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-700'
-                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-700'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                             } border`}
                         >
                           {speed.charAt(0).toUpperCase() + speed.slice(1)}
                         </button>
                       ))}
                     </div>
-                  </div>
-
-                  <div>
+                  </div>                  <div>
                     <span className="text-xs text-gray-700 dark:text-gray-300 block mb-1.5">Layout density</span>
                     <div className="grid grid-cols-3 gap-1.5">
                       {(['compact', 'comfortable', 'spacious'] as const).map((density) => (
@@ -239,11 +246,114 @@ export function VisualSettings({ onSettingsChange, className = '' }: VisualSetti
                           key={density}
                           onClick={() => updateSettings({ layoutDensity: density })}
                           className={`text-xs px-2 py-1 rounded-md transition-colors ${settings.layoutDensity === density
-                              ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-700'
-                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-700'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                             } border`}
                         >
                           {density.charAt(0).toUpperCase() + density.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-b dark:border-gray-700 pb-2">
+                  <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-2">Card Style</h4>
+
+                  <div className="mb-2">
+                    <span className="text-xs text-gray-700 dark:text-gray-300 block mb-1.5">Card style</span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {(['flat', 'elevated', 'outlined', 'glass', 'gradient'] as const).map((style) => (
+                        <button
+                          key={style}
+                          onClick={() => updateSettings({ cardStyle: style })}
+                          className={`text-xs px-2 py-1 rounded-md transition-colors ${settings.cardStyle === style
+                            ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-700'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            } border`}
+                        >
+                          {style.charAt(0).toUpperCase() + style.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mb-2">
+                    <span className="text-xs text-gray-700 dark:text-gray-300 block mb-1.5">Border radius</span>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(['none', 'small', 'medium', 'large', 'full'] as const).map((radius) => (
+                        <button
+                          key={radius}
+                          onClick={() => updateSettings({ borderRadius: radius })}
+                          className={`text-xs px-2 py-1 rounded-md transition-colors ${settings.borderRadius === radius
+                            ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-700'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            } border`}
+                        >
+                          {radius.charAt(0).toUpperCase() + radius.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-xs text-gray-700 dark:text-gray-300 block mb-1.5">Shadow</span>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(['none', 'subtle', 'medium', 'strong', 'glow'] as const).map((shadow) => (
+                        <button
+                          key={shadow}
+                          onClick={() => updateSettings({ cardShadow: shadow })}
+                          className={`text-xs px-2 py-1 rounded-md transition-colors ${settings.cardShadow === shadow
+                            ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-700'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            } border`}
+                        >
+                          {shadow.charAt(0).toUpperCase() + shadow.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-b dark:border-gray-700 pb-2">
+                  <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-2">Typography</h4>
+
+                  <div className="mb-2">
+                    <span className="text-xs text-gray-700 dark:text-gray-300 block mb-1.5">Font family</span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {(['system', 'mono', 'sans', 'serif'] as const).map((font) => (
+                        <button
+                          key={font}
+                          onClick={() => updateSettings({ fontFamily: font })}
+                          className={`text-xs px-2 py-1 rounded-md transition-colors ${settings.fontFamily === font
+                            ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-700'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            } border`}
+                          style={{
+                            fontFamily: font === 'mono' ? 'monospace' :
+                              font === 'sans' ? 'sans-serif' :
+                                font === 'serif' ? 'serif' : 'system-ui'
+                          }}
+                        >
+                          {font.charAt(0).toUpperCase() + font.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-xs text-gray-700 dark:text-gray-300 block mb-1.5">Spacing</span>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(['tight', 'normal', 'relaxed'] as const).map((space) => (
+                        <button
+                          key={space}
+                          onClick={() => updateSettings({ spacing: space })}
+                          className={`text-xs px-2 py-1 rounded-md transition-colors ${settings.spacing === space
+                            ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-700'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            } border`}
+                        >
+                          {space.charAt(0).toUpperCase() + space.slice(1)}
                         </button>
                       ))}
                     </div>
@@ -265,6 +375,11 @@ export function VisualSettings({ onSettingsChange, className = '' }: VisualSetti
                       animationSpeed: 'normal',
                       layoutDensity: 'comfortable',
                       contrastMode: 'standard',
+                      borderRadius: 'medium',
+                      cardShadow: 'medium',
+                      fontFamily: 'system',
+                      cardStyle: 'elevated',
+                      spacing: 'normal',
                     };
                     setSettings(defaultSettings);
                     localStorage.setItem('visualSettings', JSON.stringify(defaultSettings));

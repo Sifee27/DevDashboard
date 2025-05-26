@@ -1,24 +1,28 @@
 "use client";
 
-import React, { useState, FormEvent, useEffect, useMemo, useCallback } from 'react';
-import { ExternalLink, Moon, RefreshCcw, Sun, LineChart, LayoutGrid, X } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { ExternalLink, Moon, RefreshCcw, Sun, LineChart, LayoutGrid, X, Play, Pause, RotateCcw, Timer } from 'lucide-react'; // Removed unused imports
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { AnimatedBackground } from '@/components/ui/animated-background';
 import { VisualSettings, VisualSettingsState } from '@/components/ui/visual-settings';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay } from '@dnd-kit/core';
-import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, rectSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable';
+import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from "../../lib/utils";
 import { Skeleton } from '@/components/ui/skeleton';
-import { TaskItem } from '@/components/ui/task-item';
 import { PRStatusIcon } from '@/components/ui/pr-status-icon';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
 import { GitHubStatusBadge } from '@/components/ui/github-status-badge';
 import { CommitLineChart } from '@/components/ui/commit-line-chart';
+import { QuickNotesCard } from '@/components/ui/quick-notes-card';
+import { DailyReflectionCard } from '@/components/ui/daily-reflection-card';
+import { StreakTrackerCard } from '@/components/ui/streak-tracker-card';
+import { GoalProgressTrackerCard } from '@/components/ui/goal-progress-tracker-card';
+import { UserProfileDropdown } from '@/components/ui/user-profile-dropdown';
+import { checkAndMigrateDashboard, DashboardCard as MigrationDashboardCard } from '@/lib/dashboard-migration';
 
 // Component types
 type CommitActivity = Array<{
@@ -41,22 +45,25 @@ type Repository = {
   description?: string;
 };
 
-type ChecklistItem = {
-  id: string;
-  text: string;
-  completed: boolean;
-};
 
-type DashboardCard = {
-  id: string;
-  title: string;
-  type: 'github-activity' | 'goals' | 'pull-requests' | 'repositories' | 'languages' | 'commit-line-chart';
-  colSpan: string;
-  visible: boolean;
+
+type DashboardCard = MigrationDashboardCard;
+
+// Generate sample commit activity data
+const generateCommitActivity = (): CommitActivity => {
+  const today = new Date();
+  return Array.from({ length: 84 }, (_, i) => {
+    const date = new Date(today);
+    date.setDate(date.getDate() - (83 - i));
+    return {
+      date: date.toISOString().split('T')[0],
+      count: Math.floor(Math.random() * 8)
+    };
+  });
 };
 
 // Sortable Card Component
-function SortableCard({ id, children, className, onClose }: { id: string; children: React.ReactNode; className?: string; onClose?: () => void }) {
+function SortableCard({ id, children, className, onClose, visualSettings }: { id: string; children: React.ReactNode; className?: string; onClose?: () => void; visualSettings?: VisualSettingsState }) {
   const {
     attributes,
     listeners,
@@ -71,6 +78,19 @@ function SortableCard({ id, children, className, onClose }: { id: string; childr
     transition,
     opacity: isDragging ? 0.3 : 1,
     zIndex: isDragging ? 1000 : 'auto',
+  };
+
+  // Apply visual settings classes
+  const getCardClasses = () => {
+    if (!visualSettings) return className || '';
+
+    const borderRadiusClass = `border-radius-${visualSettings.borderRadius}`;
+    const cardShadowClass = `card-shadow-${visualSettings.cardShadow}`;
+    const cardStyleClass = `card-style-${visualSettings.cardStyle}`;
+    const fontFamilyClass = `font-family-${visualSettings.fontFamily}`;
+    const spacingClass = `spacing-${visualSettings.spacing}`;
+
+    return `${className || ''} ${borderRadiusClass} ${cardShadowClass} ${cardStyleClass} ${fontFamilyClass} ${spacingClass}`;
   };
 
   // Customize this for each card type or index with the card-1, card-2 classes
@@ -97,7 +117,7 @@ function SortableCard({ id, children, className, onClose }: { id: string; childr
     <motion.div
       ref={setNodeRef}
       style={style}
-      className={`${className} ${isDragging ? 'ring-2 ring-blue-500 shadow-2xl scale-105' : ''} group relative transition-all duration-200`}
+      className={`${getCardClasses()} ${isDragging ? 'ring-2 ring-blue-500 shadow-2xl scale-105' : ''} group relative transition-all duration-200`}
       initial="hidden"
       animate="visible"
       variants={cardVariants}
@@ -146,41 +166,42 @@ function renderCard(card: DashboardCard, props: {
   commitActivity: CommitActivity;
   visualSettings: VisualSettingsState;
   isLoading: boolean;
-  newTask: string;
-  setNewTask: (value: string) => void;
-  addTask: (e: FormEvent) => void;
-  checklist: ChecklistItem[];
-  sensors: ReturnType<typeof useSensors>;
-  handleDragEnd: (event: DragEndEvent) => void;
-  toggleChecklistItem: (id: string) => void;
-  deleteTask: (id: string) => void;
-  clearCompleted: () => void;
   pullRequests: PullRequest[];
   getStatusColor: (status: string) => string;
   repoFilter: 'stars' | 'activity';
   setRepoFilter: (filter: 'stars' | 'activity') => void;
   filteredRepositories: Repository[];
   onCloseCard: (cardId: string) => void;
+  // Pomodoro timer props
+  pomodoroTime: number;
+  pomodoroActive: boolean;
+  pomodoroSessions: number;
+  isBreak: boolean;
+  startPomodoro: () => void;
+  pausePomodoro: () => void;
+  resetPomodoro: () => void;
+  formatTime: (seconds: number) => string;
 }) {
+
   const {
     commitActivity,
     visualSettings,
     isLoading,
-    newTask,
-    setNewTask,
-    addTask,
-    checklist,
-    sensors,
-    handleDragEnd,
-    toggleChecklistItem,
-    deleteTask,
-    clearCompleted,
     pullRequests,
     getStatusColor,
     repoFilter,
     setRepoFilter,
     filteredRepositories,
-    onCloseCard
+    onCloseCard,
+    // Pomodoro timer props
+    pomodoroTime,
+    pomodoroActive,
+    pomodoroSessions,
+    isBreak,
+    startPomodoro,
+    pausePomodoro,
+    resetPomodoro,
+    formatTime
   } = props;
 
   switch (card.type) {
@@ -188,8 +209,9 @@ function renderCard(card: DashboardCard, props: {
       return (
         <SortableCard
           id={card.id}
-          className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-1 card dashboard-card min-h-[320px]`}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-1 card dashboard-card min-h-[320px]`}
           onClose={() => onCloseCard(card.id)}
+          visualSettings={visualSettings}
         >
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Recent Activity Heatmap</h2>
@@ -241,10 +263,10 @@ function renderCard(card: DashboardCard, props: {
                 <div
                   key={`legend-${level}`}
                   className={`w-3 h-3 rounded-sm mr-1 ${level === 0 ? 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700' :
-                      level === 1 ? 'bg-green-100 dark:bg-green-900' :
-                        level === 2 ? 'bg-green-200 dark:bg-green-800' :
-                          level === 3 ? 'bg-green-300 dark:bg-green-700' :
-                            'bg-green-400 dark:bg-green-600'
+                    level === 1 ? 'bg-green-100 dark:bg-green-900' :
+                      level === 2 ? 'bg-green-200 dark:bg-green-800' :
+                        level === 3 ? 'bg-green-300 dark:bg-green-700' :
+                          'bg-green-400 dark:bg-green-600'
                     }`}
                 />
               ))}
@@ -255,8 +277,9 @@ function renderCard(card: DashboardCard, props: {
       return (
         <SortableCard
           id={card.id}
-          className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
           onClose={() => onCloseCard(card.id)}
+          visualSettings={visualSettings}
         >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Commit Activity Over Time</h2>
@@ -274,82 +297,13 @@ function renderCard(card: DashboardCard, props: {
               height={250} // Set chart height
             />
           )}
-        </SortableCard>); case 'goals':
-      return (
-        <SortableCard
-          id={card.id}
-          className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-2 card dashboard-card min-h-[320px]`}
-          onClose={() => onCloseCard(card.id)}
-        >
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Today&apos;s Goals</h2>
-
-          <form onSubmit={addTask} className="mb-4">
-            <div className="relative">
-              <input
-                type="text"
-                value={newTask}
-                onChange={(e) => setNewTask(e.target.value)}
-                placeholder="Add a new task..."
-                className="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-xs text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-theme-primary transition-colors button-hover"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
-                  <path fillRule="evenodd" d="M7.75 2a.75.75 0 01.75.75V7h4.25a.75.75 0 110 1.5H8.5v4.25a.75.75 0 11-1.5 0V8.5H2.75a.75.75 0 010-1.5H7V2.75A.75.75 0 017.75 2z" />
-                </svg>
-              </button>
-            </div>
-          </form>
-
-          {isLoading ? (
-            <div className="space-y-3 max-h-[230px] mb-3">
-              <Skeleton className="h-6 w-full" />
-              <Skeleton className="h-6 w-full" />
-              <Skeleton className="h-6 w-full" />
-            </div>
-          ) : (
-            <div className="max-h-[230px] overflow-y-auto mb-3">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext items={checklist.map((item: ChecklistItem) => item.id)} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-1">
-                    {checklist.map((item: ChecklistItem) => (
-                      <TaskItem
-                        key={item.id}
-                        id={item.id}
-                        text={item.text}
-                        completed={item.completed}
-                        onToggle={toggleChecklistItem}
-                        onDelete={deleteTask}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            </div>
-          )}
-
-          {checklist.some((item: ChecklistItem) => item.completed) && (
-            <div className="text-right">
-              <button
-                onClick={clearCompleted}
-                className="text-xs text-theme-primary hover:opacity-80 transition-colors button-hover button-press"
-              >
-                Clear completed
-              </button>
-            </div>
-          )}
         </SortableCard>); case 'pull-requests':
       return (
         <SortableCard
           id={card.id}
-          className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
           onClose={() => onCloseCard(card.id)}
+          visualSettings={visualSettings}
         >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Pull Requests</h2>
@@ -398,8 +352,9 @@ function renderCard(card: DashboardCard, props: {
       return (
         <SortableCard
           id={card.id}
-          className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
           onClose={() => onCloseCard(card.id)}
+          visualSettings={visualSettings}
         >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Top Repositories</h2>
@@ -467,8 +422,9 @@ function renderCard(card: DashboardCard, props: {
     ]; return (
       <SortableCard
         id={card.id}
-        className={`${card.colSpan} bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-4 card dashboard-card min-h-[320px]`}
+        className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-4 card dashboard-card min-h-[320px]`}
         onClose={() => onCloseCard(card.id)}
+        visualSettings={visualSettings}
       >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Languages Used</h2>
@@ -518,10 +474,214 @@ function renderCard(card: DashboardCard, props: {
       </SortableCard>
     );
 
+    case 'pomodoro':
+      return (
+        <SortableCard
+          id={card.id}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          onClose={() => onCloseCard(card.id)}
+          visualSettings={visualSettings}
+        >
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
+              Pomodoro Timer
+            </h2>
+            <Timer className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+          </div>
+
+          <div className="flex flex-col items-center space-y-6">
+            {/* Timer Display */}
+            <div className="text-center">
+              <div className={`text-6xl font-bold font-mono transition-colors duration-300 ${isBreak
+                ? 'text-green-500 dark:text-green-400'
+                : pomodoroActive
+                  ? 'text-red-500 dark:text-red-400'
+                  : 'text-gray-700 dark:text-gray-300'
+                }`} style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
+                {formatTime(pomodoroTime)}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                {isBreak ? 'Break Time' : 'Work Session'}
+              </div>
+            </div>
+
+            {/* Control Buttons */}
+            <div className="flex space-x-3">
+              <button
+                onClick={pomodoroActive ? pausePomodoro : startPomodoro}
+                className={`p-3 rounded-full transition-all duration-200 ${pomodoroActive
+                  ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                  : 'bg-green-500 hover:bg-green-600 text-white'
+                  } button-hover button-press`}
+                title={pomodoroActive ? 'Pause timer' : 'Start timer'}
+              >
+                {pomodoroActive ? (
+                  <Pause className="h-6 w-6" />
+                ) : (
+                  <Play className="h-6 w-6" />
+                )}
+              </button>
+
+              <button
+                onClick={resetPomodoro}
+                className="p-3 rounded-full bg-gray-500 hover:bg-gray-600 text-white transition-all duration-200 button-hover button-press"
+                title="Reset timer"
+              >
+                <RotateCcw className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Session Counter */}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-theme-primary mb-1">
+                {pomodoroSessions}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Completed Sessions
+              </div>
+            </div>
+
+            {/* Progress Indicator */}
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+              <div
+                className={`h-full transition-all duration-300 ${isBreak ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                style={{
+                  width: `${((isBreak ? 5 * 60 : 25 * 60) - pomodoroTime) / (isBreak ? 5 * 60 : 25 * 60) * 100}%`
+                }}
+              />
+            </div>
+          </div>
+        </SortableCard>
+      );
+
+    case 'quick-links':
+      return (
+        <SortableCard
+          id={card.id}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          onClose={() => onCloseCard(card.id)}
+          visualSettings={visualSettings}
+        >
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">
+                Quick Links
+              </h3>
+              <ExternalLink className="h-5 w-5 text-gray-400" />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              {/* GitHub Profile */}
+              <a
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-black dark:bg-white rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white dark:text-black" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">GitHub Profile</span>
+                </div>
+                <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+              </a>
+
+              {/* Replit */}
+              <a
+                href="https://replit.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">R</span>
+                  </div>
+                  <span className="font-medium">Replit</span>
+                </div>
+                <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+              </a>
+
+              {/* Vercel */}
+              <a
+                href="https://vercel.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-black dark:bg-white rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white dark:text-black" fill="currentColor" viewBox="0 0 76 65">
+                      <path d="M37.5 0L75 65H0L37.5 0z" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">Vercel</span>
+                </div>
+                <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+              </a>
+            </div>
+          </div>
+        </SortableCard>
+      );
+
+    case 'quick-notes':
+      return (
+        <SortableCard
+          id={card.id}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          onClose={() => onCloseCard(card.id)}
+          visualSettings={visualSettings}
+        >
+          <QuickNotesCard />
+        </SortableCard>
+      );
+
+    case 'daily-reflection':
+      return (
+        <SortableCard
+          id={card.id}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          onClose={() => onCloseCard(card.id)}
+          visualSettings={visualSettings}
+        >
+          <DailyReflectionCard />
+        </SortableCard>
+      );
+
+    case 'streak-tracker':
+      return (
+        <SortableCard
+          id={card.id}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          onClose={() => onCloseCard(card.id)}
+          visualSettings={visualSettings}
+        >
+          <StreakTrackerCard />
+        </SortableCard>
+      );
+
+    case 'goal-progress':
+      return (
+        <SortableCard
+          id={card.id}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          onClose={() => onCloseCard(card.id)}
+          visualSettings={visualSettings}
+        >
+          <GoalProgressTrackerCard />
+        </SortableCard>
+      );
+
     default:
       return null;
   }
 }
+
+// Use shared migration utilities
 
 export default function Dashboard() {
   // Loading states
@@ -530,26 +690,9 @@ export default function Dashboard() {
   // Repository filter state
   const [repoFilter, setRepoFilter] = useState<'stars' | 'activity'>('stars');
 
-  // Card order state for drag and drop
+  // Card order state for drag and drop with auto-migration
   const [cards, setCards] = useState<DashboardCard[]>(() => {
-    // Load saved card order from localStorage or use default
-    if (typeof window !== 'undefined') {
-      const savedCards = localStorage.getItem('devdashboard-card-order');
-      if (savedCards) {
-        try {
-          return JSON.parse(savedCards);
-        } catch (e) {
-          console.error('Failed to parse card order from localStorage:', e);
-        }
-      }
-    } return [
-      { id: 'github-activity', title: 'Recent Activity Heatmap', type: 'github-activity', colSpan: 'col-span-1 lg:col-span-2', visible: true },
-      { id: 'commit-line-chart', title: 'Commit Activity Over Time', type: 'commit-line-chart', colSpan: 'col-span-1 lg:col-span-2', visible: true },
-      { id: 'goals', title: "Today's Goals", type: 'goals', colSpan: 'col-span-1', visible: true },
-      { id: 'languages', title: 'Languages Used', type: 'languages', colSpan: 'col-span-1', visible: true },
-      { id: 'pull-requests', title: 'Pull Requests', type: 'pull-requests', colSpan: 'col-span-1 lg:col-span-2', visible: true },
-      { id: 'repositories', title: 'Top Repositories', type: 'repositories', colSpan: 'col-span-1 lg:col-span-2', visible: true }
-    ];
+    return checkAndMigrateDashboard();
   });
   // State for tracking active drag card for overlay
   const [activeCard, setActiveCard] = useState<DashboardCard | null>(null);
@@ -603,7 +746,7 @@ export default function Dashboard() {
 
   // We'll define filteredRepositories after repositories is initialized
 
-  // Setup dnd sensors for drag and drop
+  // Setup dnd sensors for drag and drop (for cards)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -615,31 +758,71 @@ export default function Dashboard() {
     })
   );
 
-  // Input state for new tasks
-  const [newTask, setNewTask] = useState('');
+  // Pomodoro Timer State
+  const [pomodoroTime, setPomodoroTime] = useState<number>(25 * 60); // 25 minutes in seconds
+  const [pomodoroActive, setPomodoroActive] = useState<boolean>(false);
+  const [pomodoroSessions, setPomodoroSessions] = useState<number>(0);
+  const [isBreak, setIsBreak] = useState<boolean>(false);
 
-  // Generate sample commit activity data for the heatmap
-  const generateCommitActivity = (): CommitActivity => {
-    const activity: CommitActivity = [];
-    const now = new Date();
+  // Pomodoro Timer Effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
 
-    // Generate data for the last 12 weeks (84 days)
-    for (let i = 83; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(now.getDate() - i);
-      // Higher probability of commits on weekdays
-      const dayOfWeek = date.getDay();
-      const isWeekday = dayOfWeek > 0 && dayOfWeek < 6;
-      const maxCommits = isWeekday ? 8 : 4;
-      activity.push({
-        date: date.toISOString().split('T')[0],
-        count: Math.floor(Math.random() * maxCommits) // 0-7 commits on weekdays, 0-3 on weekends
-      });
+    if (pomodoroActive && pomodoroTime > 0) {
+      interval = setInterval(() => {
+        setPomodoroTime(time => time - 1);
+      }, 1000);
+    } else if (pomodoroTime === 0) {
+      // Timer finished
+      setPomodoroActive(false);
+      if (!isBreak) {
+        // Work session completed
+        setPomodoroSessions(sessions => sessions + 1);
+        toast.success('Pomodoro session completed! Time for a break. 🍅', {
+          duration: 5000
+        });
+        // Start break (5 minutes)
+        setIsBreak(true);
+        setPomodoroTime(5 * 60);
+      } else {
+        // Break completed
+        toast.success('Break time is over! Ready for another session?', {
+          duration: 3000
+        });
+        setIsBreak(false);
+        setPomodoroTime(25 * 60); // Reset to 25 minutes
+      }
     }
 
-    return activity;
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [pomodoroActive, pomodoroTime, isBreak]);
+
+  // Pomodoro Timer Functions
+  const startPomodoro = () => {
+    setPomodoroActive(true);
+    toast.success(isBreak ? 'Break timer started!' : 'Pomodoro session started! Focus time! 🍅');
   };
 
+  const pausePomodoro = () => {
+    setPomodoroActive(false);
+    toast('Timer paused');
+  };
+
+  const resetPomodoro = () => {
+    setPomodoroActive(false);
+    setIsBreak(false);
+    setPomodoroTime(25 * 60);
+    toast('Timer reset');
+  };
+
+  // Format time for display
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
   // Sample data
   const commitActivity = generateCommitActivity();
 
@@ -674,34 +857,6 @@ export default function Dashboard() {
       }
     });
   }, [repositories, repoFilter]);
-
-  // Load checklist from localStorage or use default items
-  const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      const savedChecklist = localStorage.getItem('devdashboard-checklist');
-      if (savedChecklist) {
-        try {
-          return JSON.parse(savedChecklist);
-        } catch (e) {
-          console.error('Failed to parse checklist from localStorage:', e);
-        }
-      }
-    }
-    return [
-      { id: '1', text: 'Fix login bug', completed: false },
-      { id: '2', text: 'Add dark mode toggle', completed: true },
-      { id: '3', text: 'Implement search feature', completed: false },
-      { id: '4', text: 'Update README', completed: false },
-      { id: '5', text: 'Deploy to production', completed: false },
-    ];
-  });
-
-  // Save checklist to localStorage when it changes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('devdashboard-checklist', JSON.stringify(checklist));
-    }
-  }, [checklist]);
 
   // Save card order to localStorage when it changes
   useEffect(() => {
@@ -759,23 +914,6 @@ export default function Dashboard() {
   //   return {}; // Default to an empty object
   // });
 
-  // Handle task reordering (drag and drop)
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      setChecklist((currentItems: ChecklistItem[]) => {
-        const oldIndex = currentItems.findIndex((item) => item.id === active.id.toString());
-        const newIndex = currentItems.findIndex((item) => item.id === over.id.toString());
-
-        if (oldIndex === -1 || newIndex === -1) {
-          return currentItems;
-        }
-        return arrayMove(currentItems, oldIndex, newIndex);
-      });
-    }
-  };
-
   // Card Drag and Drop Handlers
   const handleCardDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -808,89 +946,6 @@ export default function Dashboard() {
     setActiveCard(null);
   };
 
-  // Toggle checklist item completion
-  const toggleChecklistItem = (id: string) => {
-    setChecklist(checklist.map(item => {
-      if (item.id === id) {
-        const newState = !item.completed;
-        return { ...item, completed: newState };
-      }
-      return item;
-    }));
-
-    const updatedList = checklist.map(item => {
-      if (item.id === id) {
-        return { ...item, completed: !item.completed };
-      }
-      return item;
-    });
-
-    if (updatedList.length > 0 && updatedList.every(item => item.completed)) {
-      if (visualSettings?.enableMicrointeractions) {
-        toast.success('All tasks completed! 🎉', {
-          style: { background: '#7c3aed', color: 'white' },
-          duration: 3000,
-        });
-
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: [
-            themeColors.primary,
-            themeColors.secondary,
-            '#00bcd4',
-            '#ff9800',
-            '#4caf50'
-          ]
-        });
-
-        setTimeout(() => {
-          confetti({
-            particleCount: 50,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0 },
-            colors: ['#ff0000', '#00ff00', '#0000ff']
-          });
-
-          confetti({
-            particleCount: 50,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1 },
-            colors: ['#ff0000', '#00ff00', '#0000ff']
-          });
-        }, 300);
-      }
-    }
-  };
-
-  // Add new task
-  const addTask = (e: FormEvent) => {
-    e.preventDefault();
-    if (newTask.trim()) {
-      const newId = String(Date.now());
-      const newTaskItem = { id: newId, text: newTask.trim(), completed: false };
-      setChecklist([...checklist, newTaskItem]);
-      setNewTask('');
-      toast.success('New task added');
-    }
-  };
-
-  // Delete a task
-  const deleteTask = (id: string) => {
-    setChecklist(checklist.filter(item => item.id !== id));
-    toast('Task removed', { icon: '🗑️' });
-  };
-
-  // Clear completed tasks
-  const clearCompleted = () => {
-    const completedCount = checklist.filter(item => item.completed).length;
-    setChecklist(checklist.filter(item => !item.completed));
-    toast(`Cleared ${completedCount} completed ${completedCount === 1 ? 'task' : 'tasks'}`);
-  };
-
   // Get status color for PR
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -907,7 +962,11 @@ export default function Dashboard() {
     violet: { primary: '#8b5cf6', secondary: '#6d28d9' },
     blue: { primary: '#3b82f6', secondary: '#2563eb' },
     green: { primary: '#10b981', secondary: '#059669' },
-    amber: { primary: '#f59e0b', secondary: '#d97706' }
+    amber: { primary: '#f59e0b', secondary: '#d97706' },
+    rose: { primary: '#f43f5e', secondary: '#e11d48' },
+    cyan: { primary: '#06b6d4', secondary: '#0891b2' },
+    orange: { primary: '#f97316', secondary: '#ea580c' },
+    emerald: { primary: '#10b981', secondary: '#059669' }
   };
 
   // Define animation speeds as constants
@@ -926,6 +985,11 @@ export default function Dashboard() {
     animationSpeed: 'normal',
     layoutDensity: 'comfortable',
     contrastMode: 'standard',
+    borderRadius: 'medium',
+    cardShadow: 'medium',
+    fontFamily: 'system',
+    cardStyle: 'elevated',
+    spacing: 'normal',
   }), []);
 
   // Load saved visual settings on component mount
@@ -993,8 +1057,32 @@ export default function Dashboard() {
     return `${baseClasses} ${densityClass} ${contrastClass}`;
   };
 
+  // Get main grid spacing classes based on visual settings
+  const getMainGridClasses = () => {
+    const baseClasses = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
+    const spacing = visualSettings?.spacing || 'normal';
+
+    let gapClass = '';
+    switch (spacing) {
+      case 'tight': gapClass = 'gap-2 md:gap-3'; break;
+      case 'normal': gapClass = 'gap-4 md:gap-6'; break;
+      case 'relaxed': gapClass = 'gap-6 md:gap-8'; break;
+      default: gapClass = 'gap-4 md:gap-6';
+    }
+
+    return `${baseClasses} ${gapClass}`;
+  };
+
   // Get the current theme colors - Memoize to avoid recalculation
   const themeColors = useMemo(() => getThemeColor(), [getThemeColor]);
+
+  // Apply data-theme attribute to document element for theme colors
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const colorTheme = visualSettings?.colorTheme || 'violet';
+      document.documentElement.setAttribute('data-theme', colorTheme);
+    }
+  }, [visualSettings?.colorTheme]);
 
   return (
     <div
@@ -1018,7 +1106,7 @@ export default function Dashboard() {
       <header className="sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 py-3 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md transition-all duration-300">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2 group">
-            <Image src="/logo.svg" alt="DevDashboard Logo" width={28} height={28} className="group-hover:rotate-[15deg] transition-transform duration-300" />
+            <Image src="/Group 2.svg" alt="DevDashboard Logo" width={28} height={28} className="group-hover:rotate-[15deg] transition-transform duration-300" />
             <h1 className="text-lg font-bold text-gray-800 dark:text-gray-200 group-hover:text-theme-primary transition-colors duration-300" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
               DevDashboard
             </h1>
@@ -1076,9 +1164,15 @@ export default function Dashboard() {
             className="relative z-[9999]" // Ensure it's above other elements
           />
 
-          <div className="w-7 h-7 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-300 ring-1 ring-gray-200 dark:ring-gray-800 hover:ring-theme-primary transition-all duration-200 cursor-pointer" title="User Profile (Coming Soon)">
-            U
-          </div>
+          <UserProfileDropdown
+            darkMode={darkMode}
+            onToggleTheme={() => {
+              const newMode = !darkMode;
+              setDarkMode(newMode);
+              localStorage.setItem('devdashboard-theme', newMode ? 'dark' : 'light');
+              toast.success(`Theme changed to ${newMode ? 'Dark' : 'Light'} Mode`, { duration: 1500 });
+            }}
+          />
         </div>
       </header>
 
@@ -1091,28 +1185,30 @@ export default function Dashboard() {
           onDragCancel={handleCardDragCancel}
         >
           <SortableContext items={visibleCards.map((card: DashboardCard) => card.id)} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className={getMainGridClasses()}>
               {visibleCards.map((card: DashboardCard) => (
-                renderCard(card, {
-                  commitActivity,
-                  visualSettings,
-                  isLoading,
-                  newTask,
-                  setNewTask,
-                  addTask,
-                  checklist,
-                  sensors,
-                  handleDragEnd,
-                  toggleChecklistItem,
-                  deleteTask,
-                  clearCompleted,
-                  pullRequests,
-                  getStatusColor,
-                  repoFilter,
-                  setRepoFilter,
-                  filteredRepositories,
-                  onCloseCard
-                })
+                <React.Fragment key={card.id}>
+                  {renderCard(card, {
+                    commitActivity,
+                    visualSettings,
+                    isLoading,
+                    pullRequests,
+                    getStatusColor,
+                    repoFilter,
+                    setRepoFilter,
+                    filteredRepositories,
+                    onCloseCard,
+                    // Pomodoro timer props
+                    pomodoroTime,
+                    pomodoroActive,
+                    pomodoroSessions,
+                    isBreak,
+                    startPomodoro,
+                    pausePomodoro,
+                    resetPomodoro,
+                    formatTime
+                  })}
+                </React.Fragment>
               ))}
             </div>
           </SortableContext>
@@ -1123,21 +1219,21 @@ export default function Dashboard() {
                   commitActivity,
                   visualSettings,
                   isLoading,
-                  newTask,
-                  setNewTask,
-                  addTask,
-                  checklist,
-                  sensors,
-                  handleDragEnd,
-                  toggleChecklistItem,
-                  deleteTask,
-                  clearCompleted,
                   pullRequests,
                   getStatusColor,
                   repoFilter,
                   setRepoFilter,
                   filteredRepositories,
-                  onCloseCard
+                  onCloseCard,
+                  // Pomodoro timer props
+                  pomodoroTime,
+                  pomodoroActive,
+                  pomodoroSessions,
+                  isBreak,
+                  startPomodoro,
+                  pausePomodoro,
+                  resetPomodoro,
+                  formatTime
                 })}
               </div>
             ) : null}
