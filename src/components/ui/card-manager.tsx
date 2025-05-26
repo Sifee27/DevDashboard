@@ -6,89 +6,17 @@ import { SortableContext, sortableKeyboardCoordinates, arrayMove, useSortable } 
 import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, CheckSquare, Square, X } from 'lucide-react';
+import { getDefaultCards, DashboardCard as MigrationDashboardCard } from '@/lib/dashboard-migration';
 
-export type DashboardCard = {
-  id: string;
-  title: string;
-  enabled?: boolean;
-  size?: string;
-  description?: string;
-  type?: string;
-  colSpan?: string;
-  visible?: boolean; // Added visible property to match usage in reset/page.tsx
-};
+export type DashboardCard = MigrationDashboardCard;
 
 export type CardLayoutSettings = {
   cards: DashboardCard[];
   layout: string[];
 };
 
-const defaultCards: DashboardCard[] = [
-  {
-    id: 'github-activity',
-    title: 'Recent Activity Heatmap', // Updated title
-    enabled: true,
-    size: 'large',
-    description: 'Shows your recent commits and contribution activity.'
-  },
-  {
-    id: 'commit-line-chart', // New card
-    title: 'Commit Activity Over Time',
-    enabled: true,
-    size: 'large',
-    description: 'Visualizes commit frequency over time.'
-  },
-  {
-    id: 'goals', // Changed ID from 'tasks'
-    title: "Today's Goals",
-    enabled: true,
-    size: 'medium',
-    description: 'Track your daily tasks and goals.'
-  },
-  {
-    id: 'pomodoro',
-    title: 'Pomodoro Timer',
-    enabled: true, // Defaulting to true, was false. localStorage will override.
-    size: 'medium',
-    description: 'Focus timer with 25-minute work sessions and breaks.'
-  },
-  {
-    id: 'quick-links',
-    title: 'Quick Links', // Updated title, was 'Quick Links Launcher'
-    enabled: true, // Defaulting to true, was false. localStorage will override.
-    size: 'small',
-    description: 'Fast access buttons to common developer sites.' // Updated description
-  },
-  {
-    id: 'quick-notes',
-    title: 'Quick Notes',
-    enabled: true,
-    size: 'medium',
-    description: 'Markdown-enabled scratchpad for notes and ideas.'
-  },
-  {
-    id: 'languages', // New card
-    title: 'Languages Used',
-    enabled: true,
-    size: 'medium',
-    description: 'Breakdown of programming languages used.'
-  },
-  {
-    id: 'pull-requests',
-    title: 'Pull Requests',
-    enabled: true,
-    size: 'medium',
-    description: 'Monitor open PRs that need attention.'
-  },
-  {
-    id: 'repositories',
-    title: 'Top Repositories',
-    enabled: true,
-    size: 'medium',
-    description: 'Browse and filter your repositories.'
-  }
-  // 'streak' and 'notifications' have been removed to align with reset/page.tsx definitions.
-];
+// Use shared default cards configuration
+const defaultCards: DashboardCard[] = getDefaultCards();
 
 type SortableCardItemProps = {
   card: DashboardCard;
@@ -171,9 +99,9 @@ export function CardManager({ onUpdateAction, initialSettings, onCloseAction, cl
             title: initialCardFromStorage.title || defaultCardDefinition.title,
             // Correctly use 'enabled' from initialCardFromStorage if it exists (already transformed by DashboardSettings)
             // otherwise, use 'enabled' from defaultCardDefinition
-            enabled: typeof initialCardFromStorage.enabled === 'boolean' 
-                       ? initialCardFromStorage.enabled 
-                       : defaultCardDefinition.enabled,
+            enabled: typeof initialCardFromStorage.enabled === 'boolean'
+              ? initialCardFromStorage.enabled
+              : defaultCardDefinition.enabled,
             size: defaultCardDefinition.size,
             description: defaultCardDefinition.description,
           };
@@ -186,7 +114,7 @@ export function CardManager({ onUpdateAction, initialSettings, onCloseAction, cl
           mergedAndOrderedCards.push({ ...defaultCardDefinition });
         }
       });
-      
+
       return mergedAndOrderedCards;
     }
     return baseCards;

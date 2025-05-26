@@ -1,53 +1,25 @@
 "use client";
 
-// All imports grouped at the top
 import { useEffect, useState } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
+import { Code, CheckCircle, PieChart, Clock, Star, ExternalLink } from 'lucide-react';
 
-// Separate icon imports to avoid bundling issues
-import { Code } from 'lucide-react';
-import { CheckCircle } from 'lucide-react';
-import { PieChart } from 'lucide-react';
-import { Clock } from 'lucide-react';
-import { Star } from 'lucide-react';
-import { ExternalLink } from 'lucide-react';
-
-// Constants defined outside component to avoid TDZ issues
-const ANIMATION_DURATIONS = {
-  slow: '60s',
-  medium: '45s',
-  fast: '30s'
-};
-
-/**
- * Home component for the landing page
- */
 export default function Home() {
-  // All state declarations grouped at the top
   const [animateOrbit, setAnimateOrbit] = useState(false);
   
-  // Effect for dark mode
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.add('dark');
-      return () => {
-        document.documentElement.classList.remove('dark');
-      };
-    }
-    return undefined;
+    document.documentElement.classList.add('dark');
+    return () => {
+      document.documentElement.classList.remove('dark');
+    };
   }, []);
 
-  // Effect for animation timing
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const timer = setTimeout(() => setAnimateOrbit(true), 500);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
+    const timer = setTimeout(() => setAnimateOrbit(true), 500);
+    return () => clearTimeout(timer);
   }, []);
 
-  // Define headerFontStyle before using it in JSX
   const headerFontStyle = { fontFamily: 'var(--font-jetbrains-mono)' };
   
   return (
@@ -90,25 +62,24 @@ export default function Home() {
 
         {/* Content */}
         <div className="container mx-auto px-4 relative z-10">
-          <div className="flex flex-col items-center justify-center max-w-4xl mx-auto text-center">
-            {/* Top badge */}
-            <div className="inline-flex items-center px-3 py-1 mb-6 rounded-full bg-violet-500/10 border border-violet-500/20 text-xs text-violet-400 animate-fade-in">
+          <div className="flex flex-col items-center justify-center max-w-4xl mx-auto text-center">            {/* Top badge */}
+            <div className="inline-flex items-center px-3 py-1 mb-6 rounded-full bg-violet-500/10 border border-violet-500/20 text-xs text-violet-400 opacity-0 animate-fade-in">
               <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-violet-500 animate-pulse"></span>
               Dev Metrics + Productivity in One Platform
             </div>
 
             {/* Heading */}
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight font-mono animate-slide-up" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight font-mono opacity-0 animate-slide-up" style={{ fontFamily: 'var(--font-jetbrains-mono)', animationDelay: '100ms' }}>
               Unlock Your
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-500 via-purple-500 to-blue-500 px-2">Developer</span>
               Potential
             </h1>
 
-            <p className="text-lg text-gray-200 max-w-2xl mx-auto mb-4 leading-relaxed animate-slide-up animate-delay-100">
+            <p className="text-lg text-gray-200 max-w-2xl mx-auto mb-4 leading-relaxed opacity-0 animate-slide-up" style={{ animationDelay: '200ms' }}>
               The all-in-one dashboard that brings together your GitHub activity, productivity metrics, and daily goals in one beautifully designed interface.
             </p>
 
-            <p className="text-sm text-gray-400 max-w-lg mx-auto mb-8 animate-slide-up animate-delay-200">
+            <p className="text-sm text-gray-400 max-w-lg mx-auto mb-8 opacity-0 animate-slide-up" style={{ animationDelay: '300ms' }}>
               Connect your GitHub account, track your progress, and boost your productivity with our intuitive developer dashboard.
             </p>
 
@@ -154,40 +125,42 @@ export default function Home() {
               <button className="px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-medium rounded-lg transition-all duration-300 shadow-lg shadow-purple-900/30 text-sm font-mono button-hover button-press" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
                 Get Early Access
               </button>
-            </div>
-
-            {/* Orbit visualization */}
-            <div className="relative w-full max-w-2xl h-80 mx-auto mb-12">
-              {/* Center hub */}
+            </div>            {/* Orbit visualization - DevDashboard logo at center */}
+            <div className="relative w-full max-w-2xl h-80 mx-auto mb-12 opacity-0 animate-fade-in" style={{ animationDelay: '700ms' }}>
+              {/* Center hub - DevDashboard logo */}
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
                 <div className="flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center mb-2 shadow-lg shadow-violet-500/20 overflow-hidden">
-                    <Image src="/Group 2.svg" alt="DevDashboard Logo" width={64} height={64} className="h-full w-full" />
+                  <div className="w-20 h-20 rounded-full bg-gray-900/90 border-2 border-violet-500/30 flex items-center justify-center mb-2 shadow-lg shadow-violet-500/20 overflow-hidden">
+                    <Image src="/Group 2.svg" alt="DevDashboard Logo" width={72} height={72} className="h-full w-full" />
                   </div>
-                  <div className="text-sm font-semibold text-white">DevDashboard</div>
+                  <div className="text-sm font-semibold text-white font-mono" style={headerFontStyle}>DevDashboard</div>
                 </div>
               </div>
 
-              {/* Orbit circles */}
-              <div className={`absolute top-1/2 left-1/2 w-40 h-40 border border-gray-700/30 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow' : ''}`} style={{ animationDuration: ANIMATION_DURATIONS ? ANIMATION_DURATIONS.fast : '30s' }}>
-                <div className="absolute -left-3 -top-3 w-6 h-6 rounded-full bg-green-900/80 border border-green-500/50 flex items-center justify-center shadow-lg shadow-green-500/10">
-                  <Code className="w-3 h-3 text-green-400" />
+              {/* Inner orbit circle */}
+              <div className={`absolute top-1/2 left-1/2 w-48 h-48 border border-gray-700/30 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow' : ''}`}>
+                <div className="absolute -left-3 -top-3 w-8 h-8 rounded-full bg-green-900/80 border-2 border-green-500/50 flex items-center justify-center shadow-lg shadow-green-500/20">
+                  <Code className="w-4 h-4 text-green-400" />
+                </div>
+                <div className="absolute -right-3 -bottom-3 w-8 h-8 rounded-full bg-blue-900/80 border-2 border-blue-500/50 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                  <CheckCircle className="w-4 h-4 text-blue-400" />
                 </div>
               </div>
-              <div className={`absolute top-1/2 left-1/2 w-72 h-72 border border-gray-700/20 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow-reverse' : ''}`} style={{ animationDuration: ANIMATION_DURATIONS ? ANIMATION_DURATIONS.medium : '45s' }}>
-                <div className="absolute -right-3 top-1/4 w-6 h-6 rounded-full bg-blue-900/80 border border-blue-500/50 flex items-center justify-center shadow-lg shadow-blue-500/10">
-                  <CheckCircle className="w-3 h-3 text-blue-400" />
+              
+              {/* Middle orbit circle */}
+              <div className={`absolute top-1/2 left-1/2 w-80 h-80 border border-gray-700/20 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow-reverse' : ''}`}>
+                <div className="absolute -right-4 top-1/4 w-8 h-8 rounded-full bg-purple-900/80 border-2 border-purple-500/50 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                  <PieChart className="w-4 h-4 text-purple-400" />
                 </div>
-                <div className="absolute left-1/4 -bottom-3 w-6 h-6 rounded-full bg-purple-900/80 border border-purple-500/50 flex items-center justify-center shadow-lg shadow-purple-500/10">
-                  <PieChart className="w-3 h-3 text-purple-400" />
+                <div className="absolute left-1/4 -bottom-4 w-8 h-8 rounded-full bg-orange-900/80 border-2 border-orange-500/50 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                  <Clock className="w-4 h-4 text-orange-400" />
                 </div>
               </div>
-              <div className={`absolute top-1/2 left-1/2 w-96 h-96 border border-gray-700/10 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow' : ''}`} style={{ animationDuration: ANIMATION_DURATIONS ? ANIMATION_DURATIONS.slow : '60s' }}>
-                <div className="absolute -left-3 bottom-1/3 w-6 h-6 rounded-full bg-orange-900/80 border border-orange-500/50 flex items-center justify-center shadow-lg shadow-orange-500/10">
-                  <Clock className="w-3 h-3 text-orange-400" />
-                </div>
-                <div className="absolute right-1/3 -top-3 w-6 h-6 rounded-full bg-pink-900/80 border border-pink-500/50 flex items-center justify-center shadow-lg shadow-pink-500/10">
-                  <Star className="w-3 h-3 text-pink-400" />
+              
+              {/* Outer orbit circle */}
+              <div className={`absolute top-1/2 left-1/2 w-96 h-96 border border-gray-700/10 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${animateOrbit ? 'animate-spin-slow' : ''}`}>
+                <div className="absolute -left-4 bottom-1/3 w-8 h-8 rounded-full bg-pink-900/80 border-2 border-pink-500/50 flex items-center justify-center shadow-lg shadow-pink-500/20">
+                  <Star className="w-4 h-4 text-pink-400" />
                 </div>
               </div>
             </div>

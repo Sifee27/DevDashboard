@@ -48,7 +48,7 @@ export function DashboardSettings({
       // 'size' and 'description' might not be on cardFromDashboard if it's from older localStorage.
       // CardManager's merging logic will fill these from its defaultCards.
       // For type safety here, we provide defaults, but CardManager will refine this.
-      size: cardFromDashboard.size || 'medium', 
+      size: cardFromDashboard.size || 'medium',
       description: cardFromDashboard.description || '',
     }))
   } : undefined;
@@ -72,18 +72,17 @@ export function DashboardSettings({
 
       {isOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={handleClose}>
-          <div 
+          <div
             className="w-full max-w-md mx-auto bg-white dark:bg-gray-900 rounded-lg shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="border-b border-gray-200 dark:border-gray-700">
               <div className="flex">
                 <button
-                  className={`px-4 py-2 text-sm font-medium ${
-                    activeTab === 'cards'
+                  className={`px-4 py-2 text-sm font-medium ${activeTab === 'cards'
                       ? 'border-b-2 border-violet-500 text-violet-600 dark:text-violet-400'
                       : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
+                    }`}
                   onClick={() => setActiveTab('cards')}
                 >
                   <div className="flex items-center gap-1.5">
@@ -92,11 +91,10 @@ export function DashboardSettings({
                   </div>
                 </button>
                 <button
-                  className={`px-4 py-2 text-sm font-medium ${
-                    activeTab === 'theme'
+                  className={`px-4 py-2 text-sm font-medium ${activeTab === 'theme'
                       ? 'border-b-2 border-violet-500 text-violet-600 dark:text-violet-400'
                       : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
+                    }`}
                   onClick={() => setActiveTab('theme')}
                 >
                   <div className="flex items-center gap-1.5">
@@ -105,11 +103,10 @@ export function DashboardSettings({
                   </div>
                 </button>
                 <button
-                  className={`px-4 py-2 text-sm font-medium ${
-                    activeTab === 'visuals'
+                  className={`px-4 py-2 text-sm font-medium ${activeTab === 'visuals'
                       ? 'border-b-2 border-violet-500 text-violet-600 dark:text-violet-400'
                       : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
+                    }`}
                   onClick={() => setActiveTab('visuals')}
                 >
                   <div className="flex items-center gap-1.5">
@@ -138,41 +135,40 @@ export function DashboardSettings({
                     {(['dark', 'nord-dark', 'solarized-dark', 'dracula'] as ThemeOption[]).map(theme => (
                       <div
                         key={theme}
-                        className={`p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
-                          currentTheme === theme
+                        className={`p-3 rounded-lg border transition-all duration-200 cursor-pointer ${currentTheme === theme
                             ? 'border-violet-500 ring-2 ring-violet-500/20'
                             : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                        }`}
+                          }`}
                         onClick={() => onThemeChangeAction(theme)}
                       >
-                        <div 
+                        <div
                           className="h-24 w-full rounded-md mb-2 overflow-hidden"
                           style={{
                             background: theme === 'dark' ? '#1a1a1a' :
-                                       theme === 'nord-dark' ? '#2e3440' :
-                                       theme === 'solarized-dark' ? '#002b36' :
-                                       '#282a36' // dracula
+                              theme === 'nord-dark' ? '#2e3440' :
+                                theme === 'solarized-dark' ? '#002b36' :
+                                  '#282a36' // dracula
                           }}
                         >
                           <div className="h-6 w-full" style={{
                             background: theme === 'dark' ? '#27272a' :
-                                      theme === 'nord-dark' ? '#3b4252' :
-                                      theme === 'solarized-dark' ? '#073642' :
-                                      '#44475a' // dracula
+                              theme === 'nord-dark' ? '#3b4252' :
+                                theme === 'solarized-dark' ? '#073642' :
+                                  '#44475a' // dracula
                           }}></div>
-                          
+
                           <div className="flex justify-between p-2">
                             <div className="w-1/2 h-3 rounded" style={{
                               background: theme === 'dark' ? '#8b5cf6' :
-                                        theme === 'nord-dark' ? '#88c0d0' :
-                                        theme === 'solarized-dark' ? '#2aa198' :
-                                        '#bd93f9' // dracula
+                                theme === 'nord-dark' ? '#88c0d0' :
+                                  theme === 'solarized-dark' ? '#2aa198' :
+                                    '#bd93f9' // dracula
                             }}></div>
                             <div className="w-3 h-3 rounded-full" style={{
                               background: theme === 'dark' ? '#f43f5e' :
-                                        theme === 'nord-dark' ? '#bf616a' :
-                                        theme === 'solarized-dark' ? '#cb4b16' :
-                                        '#ff5555' // dracula
+                                theme === 'nord-dark' ? '#bf616a' :
+                                  theme === 'solarized-dark' ? '#cb4b16' :
+                                    '#ff5555' // dracula
                             }}></div>
                           </div>
                         </div>
@@ -184,7 +180,7 @@ export function DashboardSettings({
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className="mt-4 flex justify-end">
                     <button
                       onClick={handleClose}
@@ -203,12 +199,12 @@ export function DashboardSettings({
                     Visual Effects
                   </h3>
                   <div className="space-y-4 pb-4">
-                    <VisualSettings 
+                    <VisualSettings
                       onSettingsChange={onVisualSettingsChangeAction}
                       className="w-full"
                     />
                   </div>
-                  
+
                   <div className="mt-4 flex justify-end">
                     <button
                       onClick={handleClose}

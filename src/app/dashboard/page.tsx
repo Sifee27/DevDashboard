@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, FormEvent, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ExternalLink, Moon, RefreshCcw, Sun, LineChart, LayoutGrid, X, Play, Pause, RotateCcw, Timer } from 'lucide-react'; // Removed unused imports
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,18 +8,21 @@ import { toast } from 'sonner';
 import { AnimatedBackground } from '@/components/ui/animated-background';
 import { VisualSettings, VisualSettingsState } from '@/components/ui/visual-settings';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay } from '@dnd-kit/core';
-import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, rectSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable';
+import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from "../../lib/utils";
 import { Skeleton } from '@/components/ui/skeleton';
-import { TaskItem } from '@/components/ui/task-item';
 import { PRStatusIcon } from '@/components/ui/pr-status-icon';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
 import { GitHubStatusBadge } from '@/components/ui/github-status-badge';
 import { CommitLineChart } from '@/components/ui/commit-line-chart';
 import { QuickNotesCard } from '@/components/ui/quick-notes-card';
+import { DailyReflectionCard } from '@/components/ui/daily-reflection-card';
+import { StreakTrackerCard } from '@/components/ui/streak-tracker-card';
+import { GoalProgressTrackerCard } from '@/components/ui/goal-progress-tracker-card';
+import { UserProfileDropdown } from '@/components/ui/user-profile-dropdown';
+import { checkAndMigrateDashboard, DashboardCard as MigrationDashboardCard } from '@/lib/dashboard-migration';
 
 // Component types
 type CommitActivity = Array<{
@@ -42,19 +45,9 @@ type Repository = {
   description?: string;
 };
 
-type ChecklistItem = {
-  id: string;
-  text: string;
-  completed: boolean;
-};
 
-type DashboardCard = {
-  id: string;
-  title: string;
-  type: 'github-activity' | 'goals' | 'pull-requests' | 'repositories' | 'languages' | 'commit-line-chart' | 'pomodoro' | 'quick-links' | 'quick-notes' | 'color-palette' | 'api-tester' | 'code-snippets' | 'network-monitor' | 'system-info';
-  colSpan: string;
-  visible: boolean;
-};
+
+type DashboardCard = MigrationDashboardCard;
 
 // Generate sample commit activity data
 const generateCommitActivity = (): CommitActivity => {
@@ -173,15 +166,6 @@ function renderCard(card: DashboardCard, props: {
   commitActivity: CommitActivity;
   visualSettings: VisualSettingsState;
   isLoading: boolean;
-  newTask: string;
-  setNewTask: (value: string) => void;
-  addTask: (e: FormEvent) => void;
-  checklist: ChecklistItem[];
-  sensors: ReturnType<typeof useSensors>;
-  handleDragEnd: (event: DragEndEvent) => void;
-  toggleChecklistItem: (id: string) => void;
-  deleteTask: (id: string) => void;
-  clearCompleted: () => void;
   pullRequests: PullRequest[];
   getStatusColor: (status: string) => string;
   repoFilter: 'stars' | 'activity';
@@ -198,20 +182,11 @@ function renderCard(card: DashboardCard, props: {
   resetPomodoro: () => void;
   formatTime: (seconds: number) => string;
 }) {
-  
+
   const {
     commitActivity,
     visualSettings,
     isLoading,
-    newTask,
-    setNewTask,
-    addTask,
-    checklist,
-    sensors,
-    handleDragEnd,
-    toggleChecklistItem,
-    deleteTask,
-    clearCompleted,
     pullRequests,
     getStatusColor,
     repoFilter,
@@ -321,77 +296,6 @@ function renderCard(card: DashboardCard, props: {
               themeColor={props.visualSettings.colorTheme} // Pass theme color
               height={250} // Set chart height
             />
-          )}
-        </SortableCard>); case 'goals':
-      return (
-        <SortableCard
-          id={card.id}
-          className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary staggered-card-2 card dashboard-card min-h-[320px]`}
-          onClose={() => onCloseCard(card.id)}
-          visualSettings={visualSettings}
-        >
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 font-mono" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>Today&apos;s Goals</h2>
-
-          <form onSubmit={addTask} className="mb-4">
-            <div className="relative">
-              <input
-                type="text"
-                value={newTask}
-                onChange={(e) => setNewTask(e.target.value)}
-                placeholder="Add a new task..."
-                className="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-xs text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-theme-primary transition-colors button-hover"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
-                  <path fillRule="evenodd" d="M7.75 2a.75.75 0 01.75.75V7h4.25a.75.75 0 110 1.5H8.5v4.25a.75.75 0 11-1.5 0V8.5H2.75a.75.75 0 010-1.5H7V2.75A.75.75 0 017.75 2z" />
-                </svg>
-              </button>
-            </div>
-          </form>
-
-          {isLoading ? (
-            <div className="space-y-3 max-h-[230px] mb-3">
-              <Skeleton className="h-6 w-full" />
-              <Skeleton className="h-6 w-full" />
-              <Skeleton className="h-6 w-full" />
-            </div>
-          ) : (
-            <div className="max-h-[230px] overflow-y-auto mb-3">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext items={checklist.map((item: ChecklistItem) => item.id)} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-1">
-                    {checklist.map((item: ChecklistItem) => (
-                      <TaskItem
-                        key={item.id}
-                        id={item.id}
-                        text={item.text}
-                        completed={item.completed}
-                        onToggle={toggleChecklistItem}
-                        onDelete={deleteTask}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            </div>
-          )}
-
-          {checklist.some((item: ChecklistItem) => item.completed) && (
-            <div className="text-right">
-              <button
-                onClick={clearCompleted}
-                className="text-xs text-theme-primary hover:opacity-80 transition-colors button-hover button-press"
-              >
-                Clear completed
-              </button>
-            </div>
           )}
         </SortableCard>); case 'pull-requests':
       return (
@@ -589,10 +493,10 @@ function renderCard(card: DashboardCard, props: {
             {/* Timer Display */}
             <div className="text-center">
               <div className={`text-6xl font-bold font-mono transition-colors duration-300 ${isBreak
-                  ? 'text-green-500 dark:text-green-400'
-                  : pomodoroActive
-                    ? 'text-red-500 dark:text-red-400'
-                    : 'text-gray-700 dark:text-gray-300'
+                ? 'text-green-500 dark:text-green-400'
+                : pomodoroActive
+                  ? 'text-red-500 dark:text-red-400'
+                  : 'text-gray-700 dark:text-gray-300'
                 }`} style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
                 {formatTime(pomodoroTime)}
               </div>
@@ -606,8 +510,8 @@ function renderCard(card: DashboardCard, props: {
               <button
                 onClick={pomodoroActive ? pausePomodoro : startPomodoro}
                 className={`p-3 rounded-full transition-all duration-200 ${pomodoroActive
-                    ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                    : 'bg-green-500 hover:bg-green-600 text-white'
+                  ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                  : 'bg-green-500 hover:bg-green-600 text-white'
                   } button-hover button-press`}
                 title={pomodoroActive ? 'Pause timer' : 'Start timer'}
               >
@@ -666,7 +570,7 @@ function renderCard(card: DashboardCard, props: {
               </h3>
               <ExternalLink className="h-5 w-5 text-gray-400" />
             </div>
-            
+
             <div className="grid grid-cols-1 gap-3">
               {/* GitHub Profile */}
               <a
@@ -723,7 +627,7 @@ function renderCard(card: DashboardCard, props: {
           </div>
         </SortableCard>
       );
-      
+
     case 'quick-notes':
       return (
         <SortableCard
@@ -736,10 +640,48 @@ function renderCard(card: DashboardCard, props: {
         </SortableCard>
       );
 
+    case 'daily-reflection':
+      return (
+        <SortableCard
+          id={card.id}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          onClose={() => onCloseCard(card.id)}
+          visualSettings={visualSettings}
+        >
+          <DailyReflectionCard />
+        </SortableCard>
+      );
+
+    case 'streak-tracker':
+      return (
+        <SortableCard
+          id={card.id}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          onClose={() => onCloseCard(card.id)}
+          visualSettings={visualSettings}
+        >
+          <StreakTrackerCard />
+        </SortableCard>
+      );
+
+    case 'goal-progress':
+      return (
+        <SortableCard
+          id={card.id}
+          className={`${card.colSpan} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-lg hover:border-theme-primary dashboard-card min-h-[320px]`}
+          onClose={() => onCloseCard(card.id)}
+          visualSettings={visualSettings}
+        >
+          <GoalProgressTrackerCard />
+        </SortableCard>
+      );
+
     default:
       return null;
   }
 }
+
+// Use shared migration utilities
 
 export default function Dashboard() {
   // Loading states
@@ -748,29 +690,9 @@ export default function Dashboard() {
   // Repository filter state
   const [repoFilter, setRepoFilter] = useState<'stars' | 'activity'>('stars');
 
-  // Card order state for drag and drop
+  // Card order state for drag and drop with auto-migration
   const [cards, setCards] = useState<DashboardCard[]>(() => {
-    // Load saved card order from localStorage or use default
-    if (typeof window !== 'undefined') {
-      const savedCards = localStorage.getItem('devdashboard-card-order');
-      if (savedCards) {
-        try {
-          return JSON.parse(savedCards);
-        } catch (e) {
-          console.error('Failed to parse card order from localStorage:', e);
-        }
-      }
-    }    return [
-      { id: 'github-activity', title: 'Recent Activity Heatmap', type: 'github-activity', colSpan: 'col-span-1 lg:col-span-2', visible: true },
-      { id: 'commit-line-chart', title: 'Commit Activity Over Time', type: 'commit-line-chart', colSpan: 'col-span-1 lg:col-span-2', visible: true },
-      { id: 'goals', title: "Today's Goals", type: 'goals', colSpan: 'col-span-1', visible: true },
-      { id: 'pomodoro', title: 'Pomodoro Timer', type: 'pomodoro', colSpan: 'col-span-1', visible: true },
-      { id: 'quick-links', title: 'Quick Links', type: 'quick-links', colSpan: 'col-span-1', visible: true },
-      { id: 'quick-notes', title: 'Quick Notes', type: 'quick-notes', colSpan: 'col-span-1 lg:col-span-2', visible: true },
-      { id: 'languages', title: 'Languages Used', type: 'languages', colSpan: 'col-span-1', visible: true },
-      { id: 'pull-requests', title: 'Pull Requests', type: 'pull-requests', colSpan: 'col-span-1 lg:col-span-2', visible: true },
-      { id: 'repositories', title: 'Top Repositories', type: 'repositories', colSpan: 'col-span-1 lg:col-span-2', visible: true }
-    ];
+    return checkAndMigrateDashboard();
   });
   // State for tracking active drag card for overlay
   const [activeCard, setActiveCard] = useState<DashboardCard | null>(null);
@@ -824,7 +746,7 @@ export default function Dashboard() {
 
   // We'll define filteredRepositories after repositories is initialized
 
-  // Setup dnd sensors for drag and drop
+  // Setup dnd sensors for drag and drop (for cards)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -835,9 +757,6 @@ export default function Dashboard() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-
-  // Input state for new tasks
-  const [newTask, setNewTask] = useState('');
 
   // Pomodoro Timer State
   const [pomodoroTime, setPomodoroTime] = useState<number>(25 * 60); // 25 minutes in seconds
@@ -939,34 +858,6 @@ export default function Dashboard() {
     });
   }, [repositories, repoFilter]);
 
-  // Load checklist from localStorage or use default items
-  const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      const savedChecklist = localStorage.getItem('devdashboard-checklist');
-      if (savedChecklist) {
-        try {
-          return JSON.parse(savedChecklist);
-        } catch (e) {
-          console.error('Failed to parse checklist from localStorage:', e);
-        }
-      }
-    }
-    return [
-      { id: '1', text: 'Fix login bug', completed: false },
-      { id: '2', text: 'Add dark mode toggle', completed: true },
-      { id: '3', text: 'Implement search feature', completed: false },
-      { id: '4', text: 'Update README', completed: false },
-      { id: '5', text: 'Deploy to production', completed: false },
-    ];
-  });
-
-  // Save checklist to localStorage when it changes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('devdashboard-checklist', JSON.stringify(checklist));
-    }
-  }, [checklist]);
-
   // Save card order to localStorage when it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1023,23 +914,6 @@ export default function Dashboard() {
   //   return {}; // Default to an empty object
   // });
 
-  // Handle task reordering (drag and drop)
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      setChecklist((currentItems: ChecklistItem[]) => {
-        const oldIndex = currentItems.findIndex((item) => item.id === active.id.toString());
-        const newIndex = currentItems.findIndex((item) => item.id === over.id.toString());
-
-        if (oldIndex === -1 || newIndex === -1) {
-          return currentItems;
-        }
-        return arrayMove(currentItems, oldIndex, newIndex);
-      });
-    }
-  };
-
   // Card Drag and Drop Handlers
   const handleCardDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -1070,89 +944,6 @@ export default function Dashboard() {
 
   const handleCardDragCancel = () => {
     setActiveCard(null);
-  };
-
-  // Toggle checklist item completion
-  const toggleChecklistItem = (id: string) => {
-    setChecklist(checklist.map(item => {
-      if (item.id === id) {
-        const newState = !item.completed;
-        return { ...item, completed: newState };
-      }
-      return item;
-    }));
-
-    const updatedList = checklist.map(item => {
-      if (item.id === id) {
-        return { ...item, completed: !item.completed };
-      }
-      return item;
-    });
-
-    if (updatedList.length > 0 && updatedList.every(item => item.completed)) {
-      if (visualSettings?.enableMicrointeractions) {
-        toast.success('All tasks completed! 🎉', {
-          style: { background: '#7c3aed', color: 'white' },
-          duration: 3000,
-        });
-
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: [
-            themeColors.primary,
-            themeColors.secondary,
-            '#00bcd4',
-            '#ff9800',
-            '#4caf50'
-          ]
-        });
-
-        setTimeout(() => {
-          confetti({
-            particleCount: 50,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0 },
-            colors: ['#ff0000', '#00ff00', '#0000ff']
-          });
-
-          confetti({
-            particleCount: 50,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1 },
-            colors: ['#ff0000', '#00ff00', '#0000ff']
-          });
-        }, 300);
-      }
-    }
-  };
-
-  // Add new task
-  const addTask = (e: FormEvent) => {
-    e.preventDefault();
-    if (newTask.trim()) {
-      const newId = String(Date.now());
-      const newTaskItem = { id: newId, text: newTask.trim(), completed: false };
-      setChecklist([...checklist, newTaskItem]);
-      setNewTask('');
-      toast.success('New task added');
-    }
-  };
-
-  // Delete a task
-  const deleteTask = (id: string) => {
-    setChecklist(checklist.filter(item => item.id !== id));
-    toast('Task removed', { icon: '🗑️' });
-  };
-
-  // Clear completed tasks
-  const clearCompleted = () => {
-    const completedCount = checklist.filter(item => item.completed).length;
-    setChecklist(checklist.filter(item => !item.completed));
-    toast(`Cleared ${completedCount} completed ${completedCount === 1 ? 'task' : 'tasks'}`);
   };
 
   // Get status color for PR
@@ -1373,9 +1164,15 @@ export default function Dashboard() {
             className="relative z-[9999]" // Ensure it's above other elements
           />
 
-          <div className="w-7 h-7 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-300 ring-1 ring-gray-200 dark:ring-gray-800 hover:ring-theme-primary transition-all duration-200 cursor-pointer" title="User Profile (Coming Soon)">
-            U
-          </div>
+          <UserProfileDropdown
+            darkMode={darkMode}
+            onToggleTheme={() => {
+              const newMode = !darkMode;
+              setDarkMode(newMode);
+              localStorage.setItem('devdashboard-theme', newMode ? 'dark' : 'light');
+              toast.success(`Theme changed to ${newMode ? 'Dark' : 'Light'} Mode`, { duration: 1500 });
+            }}
+          />
         </div>
       </header>
 
@@ -1395,15 +1192,6 @@ export default function Dashboard() {
                     commitActivity,
                     visualSettings,
                     isLoading,
-                    newTask,
-                    setNewTask,
-                    addTask,
-                    checklist,
-                    sensors,
-                    handleDragEnd,
-                    toggleChecklistItem,
-                    deleteTask,
-                    clearCompleted,
                     pullRequests,
                     getStatusColor,
                     repoFilter,
@@ -1431,15 +1219,6 @@ export default function Dashboard() {
                   commitActivity,
                   visualSettings,
                   isLoading,
-                  newTask,
-                  setNewTask,
-                  addTask,
-                  checklist,
-                  sensors,
-                  handleDragEnd,
-                  toggleChecklistItem,
-                  deleteTask,
-                  clearCompleted,
                   pullRequests,
                   getStatusColor,
                   repoFilter,
