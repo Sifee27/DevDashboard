@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
+import { signIn } from "next-auth/react"
 
 // Separate icon imports to avoid bundling issues
 import { Code } from 'lucide-react';
@@ -12,6 +13,9 @@ import { PieChart } from 'lucide-react';
 import { Clock } from 'lucide-react';
 import { Star } from 'lucide-react';
 import { ExternalLink } from 'lucide-react';
+
+// Set callback URL (used for testing)
+const callbackURL = 'https://localhost:3000/dashboard'
 
 // Constants defined outside component to avoid TDZ issues
 const ANIMATION_DURATIONS = {
@@ -71,7 +75,10 @@ export default function Home() {
             <Link href="/dashboard" className="px-4 py-1.5 rounded-full bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors flex items-center space-x-1.5">
               Dashboard
             </Link>
-            <button className="px-3 py-1.5 rounded-md bg-violet-600/20 text-violet-400 border border-violet-600/30 hover:bg-violet-600/30 transition-all duration-300 text-xs font-medium font-mono button-hover" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
+            <button
+              className="px-3 py-1.5 rounded-md bg-violet-600/20 text-violet-400 border border-violet-600/30 hover:bg-violet-600/30 transition-all duration-300 text-xs font-medium font-mono button-hover" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}
+              onClick={() => signIn("github", {callbackUrl: callbackURL})}
+            >
               Sign In
             </button>
           </div>
