@@ -18,7 +18,23 @@ const handler = NextAuth({
     pages: {
         signIn: '/login'
     },
-    secret: jwtSecret
+    secret: jwtSecret,
+    session: {
+        strategy: "jwt"
+    },
+    callbacks: {
+        async session({ session, token, user }) {
+            session.accessToken = token.accessToken as string;
+            session.userID = user.id as string;
+            return session;
+        },
+        async jwt({ token, user, account, profile }) {
+            if (account) {
+                token.accessToken = account.access_token;
+            }
+            return token;
+        }
+    }
 });
 
 export { handler as GET, handler as POST }
