@@ -1106,7 +1106,7 @@ export default function Dashboard() {
       <header className="sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 py-3 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md transition-all duration-300">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2 group">
-            <Image src="/logo.svg" alt="DevDashboard Logo" width={28} height={28} className="group-hover:rotate-[15deg] transition-transform duration-300" />
+            <Image src="/Group 2.svg" alt="DevDashboard Logo" width={28} height={28} className="group-hover:rotate-[15deg] transition-transform duration-300" />
             <h1 className="text-lg font-bold text-gray-800 dark:text-gray-200 group-hover:text-theme-primary transition-colors duration-300" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
               DevDashboard
             </h1>
