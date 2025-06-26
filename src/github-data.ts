@@ -22,7 +22,7 @@ async function getUserRepoList(session: Session) {
         auth: session.user.accessToken
     })
 
-    var verboseRepoList = await octokit.request('GET /user/repos', {
+    var {data: verboseRepoList} = await octokit.request('GET /user/repos', {
         headers: {
             'X-GitHub-Api-Version': '2022-11-28'
         }
@@ -30,8 +30,8 @@ async function getUserRepoList(session: Session) {
 
     var repoNameList = [];
 
-    for (var i = 0; i < verboseRepoList.data.length; i++) {
-        var { name: currentRepoName } = verboseRepoList.data[i];
+    for (var i = 0; i < verboseRepoList.length; i++) {
+        var { name: currentRepoName } = verboseRepoList[i];
 
         repoNameList.push(currentRepoName);
     }
@@ -47,9 +47,9 @@ async function getUserLanguagePercentages(session: Session) {
     var repoNameList = await getUserRepoList(session);
     var repoLanguages = {};
 
-    for (var i = 0; i < (await repoNameList).length; i++) {
+    for (var i = 0; i < repoNameList.length; i++) {
         var currentRepoName = repoNameList[i];
-        var currentRepoLanguages = await octokit.request('GET /repos/{owner}/{repo}/languages', {
+        var { data: currentRepoLanguages } = await octokit.request('GET /repos/{owner}/{repo}/languages', {
             owner: getUserName(session),
             repo: currentRepoName,
             headers: {
@@ -57,6 +57,19 @@ async function getUserLanguagePercentages(session: Session) {
             }
         })
 
-        // TODO: iterate through currentRepoLanguages and add each one to repoLanguages
+        var repoLangs = Object.keys(currentRepoLanguages);
+        
+        /* This is commented out because it creates errors.
+           I will not be fixing them for the time being because I need a break.
+           Typescript is giving me a headache. I can't see how it benefits anyone.
+        for (var j = 0; j < repoLangs.length; j++) {
+            var language = repoLangs[j];
+
+            if (!repoLanguages.hasOwnProperty(language)) {
+                repoLanguages[language] = 0;
+            }
+
+            repoLanguages[language] += currentRepoLanguages[language];
+        }*/
     }
 }
