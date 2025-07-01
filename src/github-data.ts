@@ -1,6 +1,38 @@
 import { Session } from "next-auth";
 import { Octokit } from "octokit";
 
+// TODO: Clean up this code and make it have better comments for each function
+
+// function that will increase a key by a value if that key is present in a table,
+// and create a key in the table with said value if it's not.
+function incrementKey(table: { [key: string]: number }, key: string, value: number) {
+    if (key in table) {
+        table[key] += value;
+    } else {
+        table[key] = value;
+    }
+}
+
+// function that rounds a number to a specific level of precision.
+// precision = how many digits you would like the number to be rounded to.
+// if precision is negative, it will chop off digits such as ones, tens, etc.
+function preciseRound(num: number, precision: number) {
+    precision = Math.floor(precision); // make sure precision isn't a decimal, because that causes weirdness
+
+    let multiplier = Math.pow(10, precision);
+    return Math.round(precision * multiplier) / multiplier;
+}
+
+// returns a random integer from min to max (inclusive)
+function randomInt(min: number, max: number) {
+    return min + Math.floor(Math.random() * (1 + max - min));
+}
+
+// TODO: Figure out color randomization
+function randomColor() {
+
+}
+
 function getUserFullName(session: Session) {
     return session.user.name;
 }
@@ -22,7 +54,7 @@ async function getUserRepoList(session: Session) {
         auth: session.user.accessToken
     })
 
-    var {data: verboseRepoList} = await octokit.request('GET /user/repos', {
+    var { data: verboseRepoList } = await octokit.request('GET /user/repos', {
         headers: {
             'X-GitHub-Api-Version': '2022-11-28'
         }
@@ -45,31 +77,45 @@ async function getUserLanguagePercentages(session: Session) {
     })
 
     var repoNameList = await getUserRepoList(session);
-    var repoLanguages = {};
+    var languages: { [key: string]: number } = {};
+    var languageSum = 0;
+    var languagePercentages: { [key: string]: number } = {}
 
+    // loop through every repo in the repo name list and get the language data for each repo
     for (var i = 0; i < repoNameList.length; i++) {
-        var currentRepoName = repoNameList[i];
+        var currentRepo = repoNameList[i];
         var { data: currentRepoLanguages } = await octokit.request('GET /repos/{owner}/{repo}/languages', {
             owner: getUserName(session),
-            repo: currentRepoName,
+            repo: currentRepo,
             headers: {
                 'X-GitHub-Api-Version': '2022-11-28'
             }
         })
 
-        var repoLangs = Object.keys(currentRepoLanguages);
-        
-        /* This is commented out because it creates errors.
-           I will not be fixing them for the time being because I need a break.
-           Typescript is giving me a headache. I can't see how it benefits anyone.
-        for (var j = 0; j < repoLangs.length; j++) {
-            var language = repoLangs[j];
-
-            if (!repoLanguages.hasOwnProperty(language)) {
-                repoLanguages[language] = 0;
-            }
-
-            repoLanguages[language] += currentRepoLanguages[language];
-        }*/
+        // loop through every language in the current repo
+        // and add it to the languages list
+        for (let key in currentRepoLanguages) {
+            incrementKey(languages, key, currentRepoLanguages[key]);
+        }
     }
+
+    // get the total bytes of all the languages (used for calculating average)
+    for (let language in languages) {
+        languageSum += languages[language];
+    }
+
+    for (let language in languages) {
+        var languageFraction = languages[language] / languageSum;
+        var languageFormattedPercentage = preciseRound(languageFraction * 100, 1);
+
+        languagePercentages[language] = languageFormattedPercentage;
+    }
+
+    return languagePercentages;
+}
+
+async function getPieChartReadyLanguageData(session: Session) {
+    var languagePercentages = getUserLanguagePercentages(session);
+
+
 }
