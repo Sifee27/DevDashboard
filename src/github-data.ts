@@ -1,5 +1,6 @@
 import { Session } from "next-auth";
 import { Octokit } from "octokit";
+import { randomColor } from "./color-conversion";
 
 // TODO: Clean up this code and make it have better comments for each function
 
@@ -21,16 +22,6 @@ function preciseRound(num: number, precision: number) {
 
     let multiplier = Math.pow(10, precision);
     return Math.round(precision * multiplier) / multiplier;
-}
-
-// returns a random integer from min to max (inclusive)
-function randomInt(min: number, max: number) {
-    return min + Math.floor(Math.random() * (1 + max - min));
-}
-
-// TODO: Figure out color randomization
-function randomColor() {
-
 }
 
 function getUserFullName(session: Session) {
@@ -71,7 +62,8 @@ async function getUserRepoList(session: Session) {
     return repoNameList;
 }
 
-async function getUserLanguagePercentages(session: Session) {
+// TODO: Test me!
+async function getUserLanguagePercentages(session: Session): Promise<{ [key: string]: number; }> {
     const octokit = new Octokit({
         auth: session.user.accessToken,
     })
@@ -114,8 +106,20 @@ async function getUserLanguagePercentages(session: Session) {
     return languagePercentages;
 }
 
+// TODO: Test me!
 async function getPieChartReadyLanguageData(session: Session) {
-    var languagePercentages = getUserLanguagePercentages(session);
+    var languagePercentages = await getUserLanguagePercentages(session);
+    var pieArray = [];
 
+    for (let language in languagePercentages) {
+        let table = {
+            "name": language,
+            "value": languagePercentages[language],
+            "color": randomColor(68, 88, 40, 54).hex
+        }
 
+        pieArray.push(table);
+    }
+
+    return pieArray;
 }
